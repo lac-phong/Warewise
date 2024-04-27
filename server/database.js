@@ -94,6 +94,17 @@ export async function deleteBusiness(business_id) {
     }
 }
 
+// INTERNAL FUNCTION
+async function checkBusinessExists(business_id) {
+    const sql = `SELECT 1 FROM Business WHERE business_id = ?`;
+    try {
+        const [rows] = await pool.query(sql, [business_id]);
+        return rows.length > 0;
+    } catch (error) {
+        throw new Error('Database operation failed: ' + error.message);
+    }
+}
+
 
 export async function getLocations() {
     const sql = `
@@ -125,6 +136,12 @@ export async function getLocation(business_id) {
 }
 
 export async function insertLocation(business_id, address) {
+    // updated security code
+    const businessExists = await checkBusinessExists(business_id);
+    if (!businessExists) {
+        throw new Error('Business ID does not exist');
+    }
+
     const sql = `
         INSERT INTO Location (business_id, address)
         VALUES (?, ?);
@@ -267,4 +284,36 @@ export async function deleteEmployee(business_id, employee_id) {
     } catch (error) {
         throw new Error('Failed to delete employee: ' + error.message);
     }
+}
+
+// example for sale
+export async function insertSale(salesDetails) {
+    const { business_id, product_id, quantity, payment_details } = salesDetails;
+
+    // checking to see if product exists
+    const productExists = await checkProductExists(business_id, product_id);
+    if (!productExists) {
+        throw new Error('Product does not exist.');
+    }
+
+    const sql = `
+        INSERT INTO Sales (business_id, product_id, quantity, payment_details)
+        VALUES (?, ?, ?, ?);
+    `;
+    try {
+        const [result] = await pool.query(sql, [business_id, product_id, quantity, payment_details]);
+        if (result.affectedRows) {
+            return { inserted: true, details: salesDetails };
+        } else {
+            throw new Error('Failed to insert sale');
+        }
+    } catch (error) {
+        throw new Error('Database operation failed: ' + error.message);
+    }
+}
+
+async function checkProductExists(business_id, product_id) {
+    const sql = `SELECT 1 FROM Products WHERE business_id = ? AND product_id = ?`;
+    const [rows] = await pool.query(sql, [business_id, product_id]);
+    return rows.length > 0;
 }
