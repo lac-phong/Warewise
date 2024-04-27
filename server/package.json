@@ -4,6 +4,7 @@
   "type": "module",
   "main": "database.js",
   "scripts": {
+    "start": "node app.js",
     "dev": "npx nodemon app.js"
   },
   "keywords": [],
