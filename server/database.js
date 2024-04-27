@@ -12,20 +12,166 @@ const pool = mysql.createPool({
 }).promise()
 
 export async function getBusinesses() {
-    const [rows] = await pool.query("SELECT * FROM BUSINESS")
-    return rows
+    const sql = `
+        SELECT * FROM Business;
+    `;
+    try {
+        const [rows] = await pool.query(sql);
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to retrieve businesses: ' + error.message);
+    }
 }
 
-export async function insertBusiness(business_id, business_name, days_of_op, ambient_type, address, business_category_id) {
-    const result = await pool.query(`
-    INSERT INTO BUSINESS (BUSINESS_ID, BUSINESS_NAME, DAYS_OF_OP, AMBIENT_TYPE, ADDRESS, BUSINESS_CATEGORY_ID)
-    VALUES (?, ?, ?, ?, ?, ?)
-    `, [business_id, business_name, days_of_op, ambient_type, address, business_category_id])
-    return result
+export async function getBusiness(business_id) {
+    const sql = `
+        SELECT * FROM Business
+        WHERE business_id = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('Business not found');
+        }
+    } catch (error) {
+        throw new Error('Failed to retrieve business: ' + error.message);
+    }
 }
 
-// const businesses = await getBusinesses()
-// console.log(businesses)
+export async function insertBusiness(business_id, account_id, business_name) {
+    const sql = `
+        INSERT INTO Business (business_id, account_id, business_name)
+        VALUES (?, ?, ?);
+    `;
+    try {
+        const [result] = await pool.query(sql, [business_id, account_id, business_name]);
+        if (result.affectedRows) {
+            return { business_id, account_id, business_name, inserted: true };
+        } else {
+            throw new Error('Insert failed, no rows affected');
+        }
+    } catch (error) {
+        throw new Error('Failed to insert business: ' + error.message);
+    }
+}
 
-// const result = await insertBusiness('B45', 'Con Azucar', 'Mon', 'Touristy', '3rd street', 'BCT6')
-// console.log(result)
+export async function updateBusiness(business_id, account_id, business_name) {
+    const sql = `
+        UPDATE Business
+        SET account_id = ?, business_name = ?
+        WHERE business_id = ?;
+    `;
+
+    try {
+        const [result] = await pool.query(sql, [account_id, business_name, business_id]);
+        if (result.affectedRows) {
+            return { business_id, account_id, business_name };
+        } else {
+            throw new Error('Business not found or no update needed');
+        }
+    } catch (error) {
+        throw new Error('Database operation failed: ' + error.message);
+    }
+}
+
+export async function deleteBusiness(business_id) {
+    const sql = `
+        DELETE FROM Business
+        WHERE business_id = ?;
+    `;
+
+    try {
+        const [result] = await pool.query(sql, [business_id]);
+        if (result.affectedRows) {
+            return;
+        } else {
+            throw new Error('Business not found');
+        }
+    } catch (error) {
+        throw new Error('Database operation failed: ' + error.message);
+    }
+}
+
+
+export async function getLocations() {
+    const sql = `
+        SELECT * FROM Location;
+    `;
+    try {
+        const [rows] = await pool.query(sql);
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to retrieve locations: ' + error.message);
+    }
+}
+
+export async function getLocation(business_id) {
+    const sql = `
+        SELECT * FROM Location
+        WHERE business_id = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('No location found for the specified business');
+        }
+    } catch (error) {
+        throw new Error('Failed to retrieve location: ' + error.message);
+    }
+}
+
+export async function insertLocation(business_id, address) {
+    const sql = `
+        INSERT INTO Location (business_id, address)
+        VALUES (?, ?);
+    `;
+    try {
+        const [result] = await pool.query(sql, [business_id, address]);
+        if (result.affectedRows) {
+            return { business_id, address, inserted: true };
+        } else {
+            throw new Error('Failed to insert location');
+        }
+    } catch (error) {
+        throw new Error('Database operation failed: ' + error.message);
+    }
+}
+
+export async function updateLocation(business_id, address) {
+    const sql = `
+        UPDATE Location
+        SET address = ?
+        WHERE business_id = ?;
+    `;
+    try {
+        const [result] = await pool.query(sql, [address, business_id]);
+        if (result.affectedRows) {
+            return { business_id, address, updated: true };
+        } else {
+            throw new Error('No location found for the specified business or no update was needed');
+        }
+    } catch (error) {
+        throw new Error('Failed to update location: ' + error.message);
+    }
+}
+
+export async function deleteLocation(business_id) {
+    const sql = `
+        DELETE FROM Location
+        WHERE business_id = ?;
+    `;
+    try {
+        const [result] = await pool.query(sql, [business_id]);
+        if (result.affectedRows) {
+            return { business_id, deleted: true };
+        } else {
+            throw new Error('No location found for the specified business');
+        }
+    } catch (error) {
+        throw new Error('Failed to delete location: ' + error.message);
+    }
+}
