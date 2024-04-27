@@ -175,3 +175,96 @@ export async function deleteLocation(business_id) {
         throw new Error('Failed to delete location: ' + error.message);
     }
 }
+
+
+export async function getEmployees() {
+    const sql = `SELECT * FROM Employees;`;
+    try {
+        const [rows] = await pool.query(sql);
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to retrieve all employees: ' + error.message);
+    }
+}
+
+export async function getEmployeesByBusiness(business_id) {
+    const sql = `
+        SELECT * FROM Employees
+        WHERE business_id = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id]);
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to retrieve employees for business: ' + error.message);
+    }
+}
+
+export async function getEmployeeByBusiness(business_id, employee_id) {
+    const sql = `
+        SELECT * FROM Employees
+        WHERE business_id = ? AND employee_id = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id, employee_id]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('Employee not found');
+        }
+    } catch (error) {
+        throw new Error('Failed to retrieve employee: ' + error.message);
+    }
+}
+
+export async function insertEmployee(business_id, employee_id, first_name, last_name, email, phone, address, salary) {
+    const sql = `
+        INSERT INTO Employees (business_id, employee_id, first_name, last_name, email, phone, address, salary)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+    `;
+    try {
+        const [result] = await pool.query(sql, [business_id, employee_id, first_name, last_name, email, phone, address, salary]);
+        if (result.affectedRows) {
+            return { business_id, employee_id, first_name, last_name, email, phone, address, salary, inserted: true };
+        } else {
+            throw new Error('Failed to insert employee');
+        }
+    } catch (error) {
+        throw new Error('Database operation failed: ' + error.message);
+    }
+}
+
+export async function updateEmployee(business_id, employee_id, first_name, last_name, email, phone, address, salary) {
+    const sql = `
+        UPDATE Employees
+        SET first_name = ?, last_name = ?, email = ?, phone = ?, address = ?, salary = ?
+        WHERE business_id = ? AND employee_id = ?;
+    `;
+    try {
+        const [result] = await pool.query(sql, [first_name, last_name, email, phone, address, salary, business_id, employee_id]);
+        if (result.affectedRows) {
+            return { business_id, employee_id, first_name, last_name, email, phone, address, salary, updated: true };
+        } else {
+            throw new Error('No employee found for update');
+        }
+    } catch (error) {
+        throw new Error('Failed to update employee: ' + error.message);
+    }
+}
+
+export async function deleteEmployee(business_id, employee_id) {
+    const sql = `
+        DELETE FROM Employees
+        WHERE business_id = ? AND employee_id = ?;
+    `;
+    try {
+        const [result] = await pool.query(sql, [business_id, employee_id]);
+        if (result.affectedRows) {
+            return { business_id, employee_id, deleted: true };
+        } else {
+            throw new Error('No employee found to delete');
+        }
+    } catch (error) {
+        throw new Error('Failed to delete employee: ' + error.message);
+    }
+}
