@@ -1,6 +1,6 @@
 import mysql from 'mysql2'
-
 import dotenv from 'dotenv'
+
 dotenv.config()
 
 // pool of connections
@@ -10,6 +10,39 @@ const pool = mysql.createPool({
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE
 }).promise()
+
+export async function insertAccount(username, password) {
+    const sql = `
+        INSERT INTO ACCOUNT (username, password) 
+        VALUES (?, ?);    
+    `;
+    try {
+        const [result] = await pool.query(sql, [username, password]);
+        if (result.affectedRows) {
+            return { username, password, inserted: true };
+        } else {
+            throw new Error('Insert failed, no rows affected');
+        }
+    } catch (error) {
+        throw new Error('Failed to insert account: ' + error.message);
+    }
+}
+
+export async function getAccount(username, password) {
+    const sql = `
+        SELECT * FROM ACCOUNT WHERE username = ? AND password = ?
+    `;
+    try {
+        const [rows] = await pool.query(sql, [username, password]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('Wrong username/password combination');
+        }
+    } catch (error) {
+        throw new Error('Login failed: ' + error.message);
+    }
+}
 
 export async function getBusinesses() {
     const sql = `
@@ -49,13 +82,6 @@ export async function insertBusiness(business_id, account_id, business_name) {
         const [result] = await pool.query(sql, [business_id, account_id, business_name]);
         if (result.affectedRows) {
             return { business_id, account_id, business_name, inserted: true };
-        } else {
-            throw new Error('Insert failed, no rows affected');
-        }
-    } catch (error) {
-        throw new Error('Failed to insert business: ' + error.message);
-    }
-}
 
 export async function updateBusiness(business_id, account_id, business_name) {
     const sql = `
@@ -317,3 +343,4 @@ async function checkProductExists(business_id, product_id) {
     const [rows] = await pool.query(sql, [business_id, product_id]);
     return rows.length > 0;
 }
+

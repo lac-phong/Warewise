@@ -1,6 +1,10 @@
+import cors from 'cors'
 import express from 'express'
 
 import { 
+    insertAccount, 
+    getAccount,
+  
     getBusiness,
     getBusinesses,
     insertBusiness,
@@ -22,10 +26,22 @@ import {
 
 } from './database.js'
 
-
 const app = express()
 
 app.use(express.json())
+app.use(cors())
+
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body
+    const user = await insertAccount( username, password )
+    res.status(201).send(user)
+})
+
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body
+    const user = await getAccount( username, password )
+    res.send(user)
+})
 
 
 // INTERNAL: get all businesses
