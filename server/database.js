@@ -82,6 +82,13 @@ export async function insertBusiness(business_id, account_id, business_name) {
         const [result] = await pool.query(sql, [business_id, account_id, business_name]);
         if (result.affectedRows) {
             return { business_id, account_id, business_name, inserted: true };
+        } else {
+            throw new Error('Insert failed, no rows affected');
+        }
+    } catch (error) {
+        throw new Error('Failed to insert business: ' + error.message);
+    }
+}
 
 export async function updateBusiness(business_id, account_id, business_name) {
     const sql = `
@@ -130,7 +137,6 @@ async function checkBusinessExists(business_id) {
         throw new Error('Database operation failed: ' + error.message);
     }
 }
-
 
 export async function getLocations() {
     const sql = `
@@ -343,4 +349,3 @@ async function checkProductExists(business_id, product_id) {
     const [rows] = await pool.query(sql, [business_id, product_id]);
     return rows.length > 0;
 }
-
