@@ -13,7 +13,6 @@ import {
 
     getLocations,
     getLocation,
-    getLocation,
     updateLocation,
     deleteLocation,
 
