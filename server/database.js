@@ -11,39 +11,6 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE
 }).promise()
 
-export async function insertAccount(username, password) {
-    const sql = `
-        INSERT INTO ACCOUNT (username, password) 
-        VALUES (?, ?);    
-    `;
-    try {
-        const [result] = await pool.query(sql, [username, password]);
-        if (result.affectedRows) {
-            return { username, password, inserted: true };
-        } else {
-            throw new Error('Insert failed, no rows affected');
-        }
-    } catch (error) {
-        throw new Error('Failed to insert account: ' + error.message);
-    }
-}
-
-export async function getAccount(username, password) {
-    const sql = `
-        SELECT * FROM ACCOUNT WHERE username = ? AND password = ?
-    `;
-    try {
-        const [rows] = await pool.query(sql, [username, password]);
-        if (rows.length) {
-            return rows[0];
-        } else {
-            throw new Error('Wrong username/password combination');
-        }
-    } catch (error) {
-        throw new Error('Login failed: ' + error.message);
-    }
-}
-
 export async function getBusinesses() {
     const sql = `
         SELECT * FROM Business;
@@ -56,13 +23,13 @@ export async function getBusinesses() {
     }
 }
 
-export async function getBusiness(business_id) {
+export async function getBusinessId(username, password) {
     const sql = `
-        SELECT * FROM Business
-        WHERE business_id = ?;
+        SELECT business_id FROM Business
+        WHERE username = ? AND password = ?;
     `;
     try {
-        const [rows] = await pool.query(sql, [business_id]);
+        const [rows] = await pool.query(sql, [username, password]);
         if (rows.length) {
             return rows[0];
         } else {
@@ -73,15 +40,15 @@ export async function getBusiness(business_id) {
     }
 }
 
-export async function insertBusiness(business_id, account_id, business_name) {
+export async function insertBusiness(username, password, business_name) {
     const sql = `
-        INSERT INTO Business (business_id, account_id, business_name)
+        INSERT INTO Business (username, password, business_name)
         VALUES (?, ?, ?);
     `;
     try {
-        const [result] = await pool.query(sql, [business_id, account_id, business_name]);
+        const [result] = await pool.query(sql, [username, password, business_name]);
         if (result.affectedRows) {
-            return { business_id, account_id, business_name, inserted: true };
+            return { username, password, business_name, inserted: true };
         } else {
             throw new Error('Insert failed, no rows affected');
         }
@@ -90,17 +57,17 @@ export async function insertBusiness(business_id, account_id, business_name) {
     }
 }
 
-export async function updateBusiness(business_id, account_id, business_name) {
+export async function updateBusiness(business_id, business_name) {
     const sql = `
         UPDATE Business
-        SET account_id = ?, business_name = ?
+        SET business_name = ?
         WHERE business_id = ?;
     `;
 
     try {
-        const [result] = await pool.query(sql, [account_id, business_name, business_id]);
+        const [result] = await pool.query(sql, [business_id, business_name]);
         if (result.affectedRows) {
-            return { business_id, account_id, business_name };
+            return { business_id, business_name };
         } else {
             throw new Error('Business not found or no update needed');
         }

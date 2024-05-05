@@ -4,13 +4,13 @@ import Axios from 'axios'
 import {Link} from 'react-router-dom'
 
 function RegisterPage() {
-    const [businessName, setBusinessName] = useState('')
+    const [businessNameReg, setBusinessNameReg] = useState('')
     const [usernameReg, setUsernameReg] = useState('')
     const [passwordReg, setPasswordReg] = useState('')
 
     const register = () => {
         Axios.post('http://localhost:8080/register', {
-          username: usernameReg, password: passwordReg
+          username: usernameReg, password: passwordReg, business_name: businessNameReg
         }).then((response) => {
           console.log(response);
         })
@@ -24,8 +24,8 @@ function RegisterPage() {
           <input 
           type="text"
             placeholder={'Name'}
-            value={businessName}
-            onChange={(e) => setBusinessName(e.target.value)}
+            value={businessNameReg}
+            onChange={(e) => setBusinessNameReg(e.target.value)}
             className="w-full px-4 py-2 mb-4 rounded-full border border-gray-300"
           />
           <input 
@@ -41,7 +41,7 @@ function RegisterPage() {
             value={passwordReg}
             onChange={(e) => setPasswordReg(e.target.value)} 
             className="w-full px-4 py-2 mb-4 rounded-full border border-gray-300"
-            />
+          />
           <button className='bg-blue-300 rounded-full w-full m-2 p-2 text-white'>Register</button>
           <div className="text-center py-2 text-gray-600">
             Already have an account? <Link className='underline text-pink' to={"/login"}>Log in here</Link>
