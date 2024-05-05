@@ -40,6 +40,23 @@ export async function getBusinessId(username, password) {
     }
 }
 
+export async function getBusinessInfo(business_id) {
+    const sql = `
+        SELECT * FROM Business
+        WHERE business_id = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('Business not found');
+        }
+    } catch (error) {
+        throw new Error('Failed to retrieve business: ' + error.message);
+    }
+}
+
 export async function insertBusiness(username, password, business_name) {
     const sql = `
         INSERT INTO Business (username, password, business_name)
