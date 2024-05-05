@@ -20,6 +20,22 @@ import {
     updateEmployee,
     deleteEmployee,
 
+    getOrders,
+    getOrderDetailsById,
+    getOrderBySupplier,
+    getOrderByDate,
+    getOrderBeforeDate,
+    getOrderAfterDate,
+    getOrderBetweenDates,
+    getOrderDetailsByProduct,
+    getOrderDetailsByPrice,
+    getOrderBelowPrice,
+    getOrderAbovePrice,
+    getOrderBetweenPrices,
+    insertOrderWithDetails,
+    updateOrderDetails,
+    deleteOrder
+
 } from './database.js'
 
 const app = express()
@@ -137,6 +153,97 @@ app.put("/employee/:business_id/:employee_id", async (req, res) => {
 app.delete("/employee/:business_id/:employee_id", async (req, res) => {
     const { business_id, employee_id } = req.params;
     await deleteEmployee(business_id, employee_id);
+    res.status(204).send();
+});
+
+app.get("/orders/:business_id", async (req, res) => {
+    const business_id = req.params.business_id;
+    const orders = await getOrders(business_id);
+    res.send(orders);
+});
+
+app.get("/orders/:business_id/:order_id", async (req, res) => {
+    const { order_id, business_id } = req.params;
+    const orders = await getOrderDetailsById(order_id, business_id);
+    res.send(orders);
+});
+
+app.get("/orders/:business_id/:supplier_id", async (req, res) => {
+    const { business_id, supplier_id } = req.params;
+    const orders = await getOrderBySupplier(business_id, supplier_id);
+    res.status(201).send(orders);
+});
+
+app.get("/orders/:business_id/:order_date", async (req, res) => {
+    const { business_id, order_date } = req.params;
+    const orders = await getOrderByDate(business_id, order_date);
+    res.send(orders);
+});
+
+app.get("/orders/:business_id/:order_date", async (req, res) => {
+    const { business_id, order_date } = req.params;
+    const orders = await getOrderBeforeDate(business_id, order_date);
+    res.send(orders);
+});
+
+app.get("/orders/:business_id/:order_date", async (req, res) => {
+    const { business_id, order_date } = req.params;
+    const orders = await getOrderAfterDate(business_id, order_date);
+    res.send(orders);
+});
+
+app.get("/orders/:business_id/:order_date", async (req, res) => {
+    const { business_id, order_date } = req.params;
+    const orders = await getOrderBetweenDates(business_id, order_date);
+    res.send(orders);
+});
+
+app.get("/orders/:business_id/:product_id", async (req, res) => {
+    const { business_id, product_id } = req.params;
+    const orders = await getOrderDetailsByProduct(business_id, product_id);
+    res.send(orders);
+});
+
+app.get("/orders/:business_id/:price", async (req, res) => {
+    const { business_id, price } = req.params;
+    const orders = await getOrderDetailsByPrice(business_id, price);
+    res.send(orders);
+});
+
+app.get("/orders/:business_id/:price", async (req, res) => {
+    const { business_id, price } = req.params;
+    const orders = await getOrderBelowPrice(business_id, price);
+    res.send(orders);
+});
+
+app.get("/orders/:business_id/:price", async (req, res) => {
+    const { business_id, price } = req.params;
+    const orders = await getOrderAbovePrice(business_id, price);
+    res.send(orders);
+});
+
+app.get("/orders/:business_id/:price", async (req, res) => {
+    const { business_id, price } = req.params;
+    const orders = await getOrderBetweenPrices(business_id, price);
+    res.send(orders);
+});
+
+app.post("/orders/:business_id/:supplier_id/:product_id/:quantity/:price", async (req, res) => {
+    const { business_id, supplier_id, product_id, quantity, price } = req.params;
+    const orders = await insertOrderWithDetails(business_id, supplier_id, product_id, quantity, price);
+    res.status(201).send(orders);
+});
+
+app.put("/orders/:business_id/:order_id/:product_id/:quantity/:price", async (req, res) => {
+    const { business_id, supplier_id, product_id, quantity, price } = req.params;
+    const orders = await updateOrderDetails(business_id, supplier_id, product_id, quantity, price);
+    res.send(orders);
+});
+
+// EXTERNAL: delete specific employee for a business
+app.delete("/orders/:business_id/:order_id", async (req, res) => {
+    const { business_id, order_id } = req.params;
+    await deleteOrder(business_id, order_id);
     res.status(204).send();
 });
 
