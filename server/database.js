@@ -316,3 +316,120 @@ async function checkProductExists(business_id, product_id) {
     const [rows] = await pool.query(sql, [business_id, product_id]);
     return rows.length > 0;
 }
+
+export async function getOrders(business_id) {
+    const sql = `
+        SELECT * FROM Orders
+        WHERE business_id = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id]);
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to retrieve orders for business: ' + error.message);
+    }
+}
+
+export async function getOrder(order_id, business_id) {
+    const sql = `
+        SELECT * FROM Orders
+        WHERE business_id = ? AND order_id;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id, order_id]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('No order found for the specified business');
+        }
+    } catch (error) {
+        throw new Error('Failed to retrieve order: ' + error.message);
+    }
+}
+
+export async function insertOrder(business_id) {
+    // updated security code
+    const businessExists = await checkBusinessExists(business_id);
+    if (!businessExists) {
+        throw new Error('Business ID does not exist');
+    }
+
+    const sql = `
+        INSERT INTO Orders (business_id)
+        VALUES (?);
+    `;
+
+    try {
+        const [result] = await pool.query(sql, [business_id]);
+        if (result.affectedRows) {
+            return { business_id, inserted: true };
+        } else {
+            throw new Error('Failed to insert order');
+        }
+    } catch (error) {
+        throw new Error('Database operation failed: ' + error.message);
+    }
+}
+
+export async function insertOrderDetails(business_id, order_id, supplier_id, product_id, quantity, price) {
+    // updated security code
+    const businessExists = await checkBusinessExists(business_id);
+    if (!businessExists) {
+        throw new Error('Business ID does not exist');
+    }
+    const orderExists = await checkOrderExists(order_id);
+    if (!orderExists) {
+        throw new Error('Order ID does not exist');
+    }
+
+    const sql = `
+        INSERT INTO ORDER_DETAILS (business_id, order_id, supplier_id, product_id, quantity, price)
+        VALUES (?, ?, ?, ?, ?, ?);
+    `;
+
+    try {
+        const [result] = await pool.query(sql, [business_id, order_id, supplier_id, product_id, quantity, price]);
+        if (result.affectedRows) {
+            return { business_id, order_id, supplier_id, product_id, quantity, price, inserted: true };
+        } else {
+            throw new Error('Failed to insert order details');
+        }
+    } catch (error) {
+        throw new Error('Database operation failed: ' + error.message);
+    }
+}
+
+export async function updateOrder(business_id, order_id, supplier_id, product_id, quantity, price) {
+    const sql = `
+        UPDATE ORDER_DETAILS
+        SET quantity = ?, price = ?
+        WHERE business_id = ? AND order_id = ? AND supplier_id = ? AND product_id = ?;
+    `;
+    try {
+        const [result] = await pool.query(sql, [quantity, price, business_id, order_id, supplier_id, product_id]);
+        if (result.affectedRows) {
+            return { business_id, order_id, supplier_id, product_id, quantity, price, updated: true };
+        } else {
+            throw new Error('No order found for the specified business or no update was needed');
+        }
+    } catch (error) {
+        throw new Error('Failed to update order: ' + error.message);
+    }
+}
+
+export async function deleteOrder(business_id, order_id) {
+    const sql = `
+        DELETE FROM ORDERS
+        WHERE business_id = ? AND order_id = ?;
+    `;
+    try {
+        const [result] = await pool.query(sql, [business_id, order_id]);
+        if (result.affectedRows) {
+            return { business_id, order_id, deleted: true };
+        } else {
+            throw new Error('No order found for the specified business');
+        }
+    } catch (error) {
+        throw new Error('Failed to delete order: ' + error.message);
+    }
+}
