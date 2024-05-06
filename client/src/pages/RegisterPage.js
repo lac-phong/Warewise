@@ -44,7 +44,7 @@ function RegisterPage() {
           />
           <button className='bg-blue-300 rounded-full w-full m-2 p-2 text-white'>Register</button>
           <div className="text-center py-2 text-gray-600">
-            Already have an account? <Link className='underline text-pink' to={"/login"}>Log in here</Link>
+            Already have an account? <Link className='underline text-pink' to={"/"}>Log in here</Link>
           </div>
         </form>
       </div>

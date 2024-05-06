@@ -4,6 +4,7 @@ import express from 'express'
 import { 
     getBusinesses,
     getBusinessId,
+    getBusinessInfo,
     insertBusiness,
     updateBusiness,
     deleteBusiness,
@@ -45,6 +46,17 @@ app.get("/businesses", async (req, res) => {
     const businesses = await getBusinesses()
     res.send(businesses)
 })
+
+app.get("/business/:business_id", async (req, res) => {
+    const business_id = req.params.business_id;
+    try {
+        const businessInfo = await getBusinessInfo(business_id);
+        res.send(businessInfo);
+    } catch (error) {
+        res.status(404).send({ error: error.message });
+    }
+});
+
 
 // EXTERNAL: updating specific business
 app.put("/business/:business_id", async (req, res) => {

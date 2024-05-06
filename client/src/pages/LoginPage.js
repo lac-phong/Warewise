@@ -1,18 +1,25 @@
 import React, { useState } from "react";
 import Axios from "axios";
-import {Link} from 'react-router-dom';
+import {Link, Navigate} from 'react-router-dom';
 
 function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [redirect, setRedirect] = useState(false);
 
     const login = (e) => {
         e.preventDefault();
         Axios.post('http://localhost:8080/login', { username: username, password: password })
             .then((response) => {
+                localStorage.setItem("id", JSON.stringify(response.data));
+                setRedirect(true);
                 console.log(response);
             });
     };
+
+    if (redirect) {
+        return <Navigate to="/account" />;
+    }
 
     return (
         <div className="font mt-4 h-screen flex justify-center items-center">
