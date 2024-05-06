@@ -1,6 +1,7 @@
 import React from 'react'
 import TextField from "@mui/material/TextField";
-import OrderList from "../Components/OrderList.js"
+import OrderList from "../Components/OrderList"
+import MakeOrder from '../Components/MakeOrder';
 import "../Styling/OrderPage.css";
 
 function OrderPage() {
@@ -8,8 +9,7 @@ function OrderPage() {
     <div className="main">
       <h1>Your Orders</h1>
       <div>
-        <button>thing1</button>
-        <button>thing2</button>
+        <MakeOrder />
       </div>
       <div className="search">
         <TextField
@@ -20,6 +20,7 @@ function OrderPage() {
         />
       </div>
       <OrderList />
+      
     </div>
   );
 }
