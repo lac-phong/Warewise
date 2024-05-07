@@ -11,39 +11,6 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE
 }).promise()
 
-export async function insertAccount(username, password) {
-    const sql = `
-        INSERT INTO ACCOUNT (username, password) 
-        VALUES (?, ?);    
-    `;
-    try {
-        const [result] = await pool.query(sql, [username, password]);
-        if (result.affectedRows) {
-            return { username, password, inserted: true };
-        } else {
-            throw new Error('Insert failed, no rows affected');
-        }
-    } catch (error) {
-        throw new Error('Failed to insert account: ' + error.message);
-    }
-}
-
-export async function getAccount(username, password) {
-    const sql = `
-        SELECT * FROM ACCOUNT WHERE username = ? AND password = ?
-    `;
-    try {
-        const [rows] = await pool.query(sql, [username, password]);
-        if (rows.length) {
-            return rows[0];
-        } else {
-            throw new Error('Wrong username/password combination');
-        }
-    } catch (error) {
-        throw new Error('Login failed: ' + error.message);
-    }
-}
-
 export async function getBusinesses() {
     const sql = `
         SELECT * FROM Business;
@@ -56,7 +23,24 @@ export async function getBusinesses() {
     }
 }
 
-export async function getBusiness(business_id) {
+export async function getBusinessId(username, password) {
+    const sql = `
+        SELECT business_id FROM Business
+        WHERE username = ? AND password = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [username, password]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('Business not found');
+        }
+    } catch (error) {
+        throw new Error('Failed to retrieve business: ' + error.message);
+    }
+}
+
+export async function getBusinessInfo(business_id) {
     const sql = `
         SELECT * FROM Business
         WHERE business_id = ?;
@@ -73,15 +57,15 @@ export async function getBusiness(business_id) {
     }
 }
 
-export async function insertBusiness(business_id, account_id, business_name) {
+export async function insertBusiness(username, password, business_name) {
     const sql = `
-        INSERT INTO Business (business_id, account_id, business_name)
+        INSERT INTO Business (username, password, business_name)
         VALUES (?, ?, ?);
     `;
     try {
-        const [result] = await pool.query(sql, [business_id, account_id, business_name]);
+        const [result] = await pool.query(sql, [username, password, business_name]);
         if (result.affectedRows) {
-            return { business_id, account_id, business_name, inserted: true };
+            return { username, password, business_name, inserted: true };
         } else {
             throw new Error('Insert failed, no rows affected');
         }
@@ -90,17 +74,17 @@ export async function insertBusiness(business_id, account_id, business_name) {
     }
 }
 
-export async function updateBusiness(business_id, account_id, business_name) {
+export async function updateBusiness(business_id, business_name) {
     const sql = `
         UPDATE Business
-        SET account_id = ?, business_name = ?
+        SET business_name = ?
         WHERE business_id = ?;
     `;
 
     try {
-        const [result] = await pool.query(sql, [account_id, business_name, business_id]);
+        const [result] = await pool.query(sql, [business_id, business_name]);
         if (result.affectedRows) {
-            return { business_id, account_id, business_name };
+            return { business_id, business_name };
         } else {
             throw new Error('Business not found or no update needed');
         }
@@ -348,4 +332,121 @@ async function checkProductExists(business_id, product_id) {
     const sql = `SELECT 1 FROM Products WHERE business_id = ? AND product_id = ?`;
     const [rows] = await pool.query(sql, [business_id, product_id]);
     return rows.length > 0;
+}
+
+export async function getOrders(business_id) {
+    const sql = `
+        SELECT * FROM Orders
+        WHERE business_id = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id]);
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to retrieve orders for business: ' + error.message);
+    }
+}
+
+export async function getOrder(order_id, business_id) {
+    const sql = `
+        SELECT * FROM Orders
+        WHERE business_id = ? AND order_id;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id, order_id]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('No order found for the specified business');
+        }
+    } catch (error) {
+        throw new Error('Failed to retrieve order: ' + error.message);
+    }
+}
+
+export async function insertOrder(business_id) {
+    // updated security code
+    const businessExists = await checkBusinessExists(business_id);
+    if (!businessExists) {
+        throw new Error('Business ID does not exist');
+    }
+
+    const sql = `
+        INSERT INTO Orders (business_id)
+        VALUES (?);
+    `;
+
+    try {
+        const [result] = await pool.query(sql, [business_id]);
+        if (result.affectedRows) {
+            return { business_id, inserted: true };
+        } else {
+            throw new Error('Failed to insert order');
+        }
+    } catch (error) {
+        throw new Error('Database operation failed: ' + error.message);
+    }
+}
+
+export async function insertOrderDetails(business_id, order_id, supplier_id, product_id, quantity, price) {
+    // updated security code
+    const businessExists = await checkBusinessExists(business_id);
+    if (!businessExists) {
+        throw new Error('Business ID does not exist');
+    }
+    const orderExists = await checkOrderExists(order_id);
+    if (!orderExists) {
+        throw new Error('Order ID does not exist');
+    }
+
+    const sql = `
+        INSERT INTO ORDER_DETAILS (business_id, order_id, supplier_id, product_id, quantity, price)
+        VALUES (?, ?, ?, ?, ?, ?);
+    `;
+
+    try {
+        const [result] = await pool.query(sql, [business_id, order_id, supplier_id, product_id, quantity, price]);
+        if (result.affectedRows) {
+            return { business_id, order_id, supplier_id, product_id, quantity, price, inserted: true };
+        } else {
+            throw new Error('Failed to insert order details');
+        }
+    } catch (error) {
+        throw new Error('Database operation failed: ' + error.message);
+    }
+}
+
+export async function updateOrder(business_id, order_id, supplier_id, product_id, quantity, price) {
+    const sql = `
+        UPDATE ORDER_DETAILS
+        SET quantity = ?, price = ?
+        WHERE business_id = ? AND order_id = ? AND supplier_id = ? AND product_id = ?;
+    `;
+    try {
+        const [result] = await pool.query(sql, [quantity, price, business_id, order_id, supplier_id, product_id]);
+        if (result.affectedRows) {
+            return { business_id, order_id, supplier_id, product_id, quantity, price, updated: true };
+        } else {
+            throw new Error('No order found for the specified business or no update was needed');
+        }
+    } catch (error) {
+        throw new Error('Failed to update order: ' + error.message);
+    }
+}
+
+export async function deleteOrder(business_id, order_id) {
+    const sql = `
+        DELETE FROM ORDERS
+        WHERE business_id = ? AND order_id = ?;
+    `;
+    try {
+        const [result] = await pool.query(sql, [business_id, order_id]);
+        if (result.affectedRows) {
+            return { business_id, order_id, deleted: true };
+        } else {
+            throw new Error('No order found for the specified business');
+        }
+    } catch (error) {
+        throw new Error('Failed to delete order: ' + error.message);
+    }
 }

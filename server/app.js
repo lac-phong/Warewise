@@ -2,17 +2,14 @@ import cors from 'cors'
 import express from 'express'
 
 import { 
-    insertAccount, 
-    getAccount,
-  
-    getBusiness,
     getBusinesses,
+    getBusinessId,
+    getBusinessInfo,
     insertBusiness,
     updateBusiness,
     deleteBusiness,
 
     getLocations,
-    getLocation,
     getLocation,
     updateLocation,
     deleteLocation,
@@ -32,14 +29,14 @@ app.use(express.json())
 app.use(cors())
 
 app.post('/register', async (req, res) => {
-    const { username, password } = req.body
-    const user = await insertAccount( username, password )
+    const { username, password, business_name } = req.body
+    const user = await insertBusiness( username, password, business_name )
     res.status(201).send(user)
 })
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body
-    const user = await getAccount( username, password )
+    const user = await getBusinessId( username, password )
     res.send(user)
 })
 
@@ -50,25 +47,22 @@ app.get("/businesses", async (req, res) => {
     res.send(businesses)
 })
 
-// EXTERNAL: get specific business
 app.get("/business/:business_id", async (req, res) => {
-    const id = req.params.business_id
-    const business = await getBusiness(id)
-    res.send(business)
-})
+    const business_id = req.params.business_id;
+    try {
+        const businessInfo = await getBusinessInfo(business_id);
+        res.send(businessInfo);
+    } catch (error) {
+        res.status(404).send({ error: error.message });
+    }
+});
 
-// EXTERNAL: insert specific business
-app.post("/business", async (req, res) => {
-    const { business_id, account_id, business_name } = req.body
-    const business = await insertBusiness(business_id, account_id, business_name)
-    res.status(201).send(business)
-})
 
 // EXTERNAL: updating specific business
 app.put("/business/:business_id", async (req, res) => {
-    const { account_id, business_name } = req.body;
+    const { business_name } = req.body;
     const business_id = req.params.business_id;
-    const updatedBusiness = await updateBusiness(business_id, account_id, business_name);
+    const updatedBusiness = await updateBusiness(business_id, business_name);
     res.send(updatedBusiness);
 });
 
