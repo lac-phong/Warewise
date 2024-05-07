@@ -2,19 +2,27 @@ import React from 'react'
 import { useState } from 'react'
 import Axios from 'axios'
 import {Link} from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 
 function RegisterPage() {
     const [businessNameReg, setBusinessNameReg] = useState('')
     const [usernameReg, setUsernameReg] = useState('')
     const [passwordReg, setPasswordReg] = useState('')
+    const [redirect, setRedirect] = useState(false)
 
-    const register = () => {
+    const register = (e) => {
+        e.preventDefault()
         Axios.post('http://localhost:8080/register', {
           username: usernameReg, password: passwordReg, business_name: businessNameReg
         }).then((response) => {
           console.log(response);
+          setRedirect(true);
         })
       }
+
+    if (redirect) {
+        return <Navigate to="/" />;
+    }
 
   return (
     <div className="font mt-4 h-screen flex justify-center items-center">

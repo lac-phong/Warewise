@@ -22,7 +22,7 @@ function AccountPage() {
                 console.error('Error fetching business data:', error);
             });
     }
-}, []);
+  }, []);
 
   if (!user) {
     return <div>Loading...</div>;
