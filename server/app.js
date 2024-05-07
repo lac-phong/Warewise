@@ -34,7 +34,14 @@ import {
     getOrderBetweenPrices,
     insertOrderWithDetails,
     updateOrderDetails,
-    deleteOrder
+    deleteOrder,
+
+    getSuppliers,
+    getSupplier,
+    getSupplierInfo,
+    insertSupplier,
+    updateSupplier,
+    deleteSupplier
 
 } from './database.js'
 
@@ -247,6 +254,46 @@ app.delete("/orders/:business_id/:order_id", async (req, res) => {
     res.status(204).send();
 });
 
+app.get("/suppliers/:business_id", async (req, res) => {
+    const business_id = req.params.business_id;
+    const suppliers = await getSuppliers(business_id);
+    res.send(suppliers);
+});
+
+// EXTERNAL: get specific employee for a business
+app.get("/suppliers/:business_id/:supplier_id", async (req, res) => {
+    const { business_id, supplier_id } = req.params;
+    const supplier = await getSupplier(business_id, supplier_id);
+    res.send(supplier);
+});
+
+app.get("/suppliers/:business_id/:supplier_id", async (req, res) => {
+    const { business_id, supplier_id } = req.params;
+    const supplier = await getSupplierInfo(business_id, supplier_id);
+    res.send(supplier);
+});
+
+// EXTERNAL: add specific employee for a business
+app.post("/suppliers/:business_id", async (req, res) => {
+    const { business_id, supplier_name, supplier_email, supplier_phone, supplier_address, supplier_category } = req.body;
+    const supplier = await insertSupplier(business_id, supplier_name, supplier_email, supplier_phone, supplier_address, supplier_category);
+    res.status(201).send(supplier);
+});
+
+// EXTERNAL: update specific employee for a business
+app.put("/suppliers/:business_id/:supplier_id", async (req, res) => {
+    const { business_id, supplier_id } = req.params;
+    const { supplier_name, supplier_email, supplier_phone, supplier_address, supplier_category } = req.body;
+    const updatedSupplier = await updateEmployee(business_id, supplier_id, supplier_name, supplier_email, supplier_phone, supplier_address, supplier_category);
+    res.send(updatedSupplier);
+});
+
+// EXTERNAL: delete specific employee for a business
+app.delete("/suppliers/:business_id/:supplier_id", async (req, res) => {
+    const { business_id, supplier_id } = req.params;
+    await deleteSupplier(business_id, supplier_id);
+    res.status(204).send();
+});
 
 app.listen(8080, () => {
     console.log('Server is running on port 8080')

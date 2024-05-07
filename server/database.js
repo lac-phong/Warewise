@@ -787,7 +787,7 @@ export async function insertOrderWithDetails(business_id, supplier_id, product_i
     } catch (error) {
         // Rollback the transaction if an error occurs
         await pool.query('ROLLBACK');
-        throw new Error('Database operation failed: ' + error.message);
+        throw new Error('Database operation failed to insert order: ' + error.message);
     }
 }
 
@@ -841,5 +841,111 @@ export async function deleteOrder(business_id, order_id) {
         }
     } catch (error) {
         throw new Error('Failed to delete order: ' + error.message);
+    }
+}
+
+export async function getSuppliers(business_id) {
+    const sql = `
+        SELECT * FROM Suppliers
+        WHERE business_id = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id]);
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to retrieve suppliers for business: ' + error.message);
+    }
+}
+
+export async function getSupplier(business_id, supplier_id) {
+    const sql = `
+        SELECT * FROM Suppliers
+        WHERE business_id = ? AND supplier_id = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id, supplier_id]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('Supplier not found');
+        }
+    } catch (error) {
+        throw new Error('Failed to retrieve supplier for business: ' + error.message);
+    }
+}
+
+export async function getSupplierInfo(business_id, supplier_id) {
+    const sql = `
+        SELECT SUPPLIER_NAME, EMAIL, PHONE, ADDRESS, SUPPLIER_CATEGORY 
+        FROM Suppliers
+        WHERE business_id = ? AND supplier_id = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id, supplier_id]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('Supplier not found');
+        }
+    } catch (error) {
+        throw new Error('Failed to retrieve supplier info: ' + error.message);
+    }
+}
+
+export async function insertSupplier(business_id, supplier_name, supplier_email, supplier_phone, supplier_address, supplier_category) {
+    const sql = `
+        INSERT INTO Supplieres (business_id, supplier_name, email, phone, address, supplier_category)
+        VALUES (?, ?, ?, ?, ?, ?);
+    `;
+    try {
+        const [result] = await pool.query(sql, [business_id, supplier_name, supplier_email, supplier_phone, supplier_address, supplier_category]);
+        if (result.affectedRows) {
+            return { business_id, supplier_name, supplier_email, supplier_phone, supplier_address, supplier_category, inserted: true };
+        } else {
+            throw new Error('Insert failed, no rows affected');
+        }
+    } catch (error) {
+        throw new Error('Failed to insert supplier: ' + error.message);
+    }
+}
+
+export async function updateSupplier(business_id, supplier_id, supplier_name, supplier_email, supplier_phone, supplier_address, supplier_category) {
+    const sql = `
+        UPDATE Suppliers
+        SET supplier_name = ?,
+            email = ?,
+            phone = ?,
+            address = ?
+            supplier_category = ?
+        WHERE business_id = ? AND supplier_id = ?;
+    `;
+
+    try {
+        const [result] = await pool.query(sql, [supplier_name, supplier_email, supplier_phone, supplier_address, supplier_category, business_id, supplier_id ]);
+        if (result.affectedRows) {
+            return { business_id, supplier_id, supplier_name, supplier_email, supplier_phone, supplier_address, supplier_category };
+        } else {
+            throw new Error('Supplier not found or no update needed');
+        }
+    } catch (error) {
+        throw new Error('Database operation failed to update supplier: ' + error.message);
+    }
+}
+
+export async function deleteSupplier(business_id, supplier_id) {
+    const sql = `
+        DELETE FROM Suppliers
+        WHERE business_id = ? AND supplier_id = ?;
+    `;
+
+    try {
+        const [result] = await pool.query(sql, [business_id, supplier_id]);
+        if (result.affectedRows) {
+            return;
+        } else {
+            throw new Error('Supplier not found');
+        }
+    } catch (error) {
+        throw new Error('Database operation failed to delete supplier: ' + error.message);
     }
 }
