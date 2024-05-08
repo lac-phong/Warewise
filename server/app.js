@@ -38,23 +38,6 @@ app.use(cors({
     credentials: true
 }));
 
-const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).send({ error: 'Unauthorized' });
-    }
-
-    jwt.verify(token, jwtSecret, (err, user) => {
-        if (err) {
-            return res.status(403).send({ error: 'Forbidden' });
-        }
-        req.user = user;
-        next();
-    });
-};
-
 app.post('/register', async (req, res) => {
     const { username, password, business_name } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -82,7 +65,6 @@ app.post('/login', async (req, res) => {
             return res.status(422).json('Password incorrect');
         }
         const tokenPayload = {
-            username: userInfo.USERNAME,
             business_id: userInfo.BUSINESS_ID
         };
 
@@ -99,7 +81,7 @@ app.post('/login', async (req, res) => {
 
 
 // INTERNAL: get all businesses
-app.get('/businesses', authenticateToken, async (req, res) => {
+app.get('/businesses', async (req, res) => {
     try {
         const businesses = await getBusinesses();
         res.send(businesses);
@@ -125,97 +107,114 @@ app.get("/business", async (req, res) => {
 });
 
 // EXTERNAL: updating specific business
-app.put("/business/:business_id", authenticateToken, async (req, res) => {
+app.put("/business", async (req, res) => {
+    const {token} = req.cookies
     const { business_name } = req.body;
-    const business_id = req.params.business_id;
-    const updatedBusiness = await updateBusiness(business_id, business_name);
-    res.send(updatedBusiness);
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData)
+            if (err) throw err
+            const updatedBusiness = await updateBusiness(userData.business_id, business_name);
+            res.json(updatedBusiness)
+        })
+    } else {
+        res.status(404).json(null)
+    }
 });
 
 // EXTERNAL: delete specific business
-app.delete("/business/:business_id", authenticateToken, async (req, res) => {
-    const business_id = req.params.business_id;
-    await deleteBusiness(business_id);
-    res.status(204).send();
+app.delete("/business/:business_id", async (req, res) => {
+    const {token} = req.cookies
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData)
+            if (err) throw err
+            const deletedBusiness = await deleteBusiness(userData.business_id);
+            res.json(deletedBusiness)
+        })
+    } else {
+        res.status(404).json(null)
+    }
 });
-
-
-// INTERNAL: get all businesses locations
-app.get("/locations", authenticateToken, async (req, res) => {
-    const locations = await getLocations()
-    res.send(locations)
-})
-
-// EXTERNAL: get specific business location
-app.get("/location/:business_id", authenticateToken, async (req, res) => {
-    const business_id = req.params.business_id;
-    const location = await getLocation(business_id);
-    res.send(location);
-});
-
-// EXTERNAL: insert specific business location
-app.post("/location", authenticateToken, async (req, res) => {
-    const { business_id, address } = req.body;
-    const location = await insertLocation(business_id, address);
-    res.status(201).send(location);
-});
-
-// EXTERNAL: update specific business location
-app.put("/location/:business_id", authenticateToken, async (req, res) => {
-    const business_id = req.params.business_id;
-    const { address } = req.body;
-    const updatedLocation = await updateLocation(business_id, address);
-    res.send(updatedLocation);
-});
-
-// EXTERNAL: delete specific business location
-app.delete("/location/:business_id", authenticateToken, async (req, res) => {
-    const business_id = req.params.business_id;
-    await deleteLocation(business_id);
-    res.status(204).send();
-});
-
 
 // INTERNAL: get all businesses employees
-app.get("/employees", authenticateToken, async (req, res) => {
-    const employees = await getEmployees()
-    res.send(employees)
+app.get("/employees", async (req, res) => {
+    const {token} = req.cookies
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData)
+            if (err) throw err
+            const employees = await getEmployeesByBusiness(userData.business_id);
+            res.json(employees)
+        })
+    } else {
+        res.status(404).json(null)
+    }
 })
 
-// EXTERNAL: get all employees by business
-app.get("/employees/:business_id", authenticateToken, async (req, res) => {
-    const business_id = req.params.business_id;
-    const employees = await getEmployeesByBusiness(business_id);
-    res.send(employees);
-});
-
 // EXTERNAL: get specific employee for a business
-app.get("/employee/:business_id/:employee_id", authenticateToken, async (req, res) => {
-    const { business_id, employee_id } = req.params;
-    const employee = await getEmployeeByBusiness(business_id, employee_id);
-    res.send(employee);
+app.get("/employee/:employee_id", async (req, res) => {
+    const { employee_id } = req.params;
+    const {token} = req.cookies
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData)
+            if (err) throw err
+            const employee = await getEmployeeByBusiness(userData.business_id, employee_id);
+            res.json(employee)
+        })
+    } else {
+        res.status(404).json(null)
+    }
 });
 
 // EXTERNAL: add specific employee for a business
-app.post("/employee", authenticateToken, async (req, res) => {
-    const { business_id, employee_id, first_name, last_name, email, phone, address, salary } = req.body;
-    const employee = await insertEmployee(business_id, employee_id, first_name, last_name, email, phone, address, salary);
-    res.status(201).send(employee);
+app.post("/employee", async (req, res) => {
+    const { first_name, last_name, email, phone, address, salary } = req.body;
+    const {token} = req.cookies
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData)
+            if (err) throw err
+            const employee = await insertEmployee(userData.business_id, first_name, last_name, email, phone, address, salary);
+            res.json(employee)
+        })
+    } else {
+        res.status(404).json(null)
+    }
 });
 
 // EXTERNAL: update specific employee for a business
-app.put("/employee/:business_id/:employee_id", authenticateToken, async (req, res) => {
-    const { business_id, employee_id } = req.params;
+app.put("/employee/:employee_id", async (req, res) => {
+    const { employee_id } = req.params;
     const { first_name, last_name, email, phone, address, salary } = req.body;
-    const updatedEmployee = await updateEmployee(business_id, employee_id, first_name, last_name, email, phone, address, salary);
-    res.send(updatedEmployee);
+    const {token} = req.cookies
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData)
+            if (err) throw err
+            const updatedEmployee = await updateEmployee(userData.business_id, employee_id, first_name, last_name, email, phone, address, salary);
+            res.json(updatedEmployee)
+        })
+    } else {
+        res.status(404).json(null)
+    }
 });
 
 // EXTERNAL: delete specific employee for a business
-app.delete("/employee/:business_id/:employee_id",authenticateToken, async (req, res) => {
-    const { business_id, employee_id } = req.params;
-    await deleteEmployee(business_id, employee_id);
-    res.status(204).send();
+app.delete("/employee/:employee_id", async (req, res) => {
+    const { employee_id } = req.params;
+    const {token} = req.cookies
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData)
+            if (err) throw err
+            await deleteEmployee(userData.business_id, employee_id);
+            res.status(204).json(null)
+        })
+    } else {
+        res.status(404).json(null)
+    }
 });
 
 
