@@ -250,15 +250,15 @@ export async function getEmployeeByBusiness(business_id, employee_id) {
     }
 }
 
-export async function insertEmployee(business_id, employee_id, first_name, last_name, email, phone, address, salary) {
+export async function insertEmployee(business_id, first_name, last_name, email, phone, address, salary) {
     const sql = `
-        INSERT INTO Employees (business_id, employee_id, first_name, last_name, email, phone, address, salary)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        INSERT INTO Employees (business_id, first_name, last_name, email, phone, address, salary)
+        VALUES (?, ?, ?, ?, ?, ?, ?);
     `;
     try {
-        const [result] = await pool.query(sql, [business_id, employee_id, first_name, last_name, email, phone, address, salary]);
+        const [result] = await pool.query(sql, [business_id, first_name, last_name, email, phone, address, salary]);
         if (result.affectedRows) {
-            return { business_id, employee_id, first_name, last_name, email, phone, address, salary, inserted: true };
+            return { business_id, first_name, last_name, email, phone, address, salary, inserted: true };
         } else {
             throw new Error('Failed to insert employee');
         }

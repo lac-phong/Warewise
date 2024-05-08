@@ -132,8 +132,8 @@ app.get("/employee/:business_id/:employee_id", async (req, res) => {
 
 // EXTERNAL: add specific employee for a business
 app.post("/employee", async (req, res) => {
-    const { business_id, employee_id, first_name, last_name, email, phone, address, salary } = req.body;
-    const employee = await insertEmployee(business_id, employee_id, first_name, last_name, email, phone, address, salary);
+    const { business_id, first_name, last_name, email, phone, address, salary } = req.body;
+    const employee = await insertEmployee(business_id, first_name, last_name, email, phone, address, salary);
     res.status(201).send(employee);
 });
 

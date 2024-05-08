@@ -1,9 +1,23 @@
 import React, { useEffect, useState } from 'react'
 import Axios from 'axios'
+import AddEmployee from '../components/AddEmployee';
+import Button from '@mui/material/Button';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const EmployeePage = () => {
     const [id, setId] = useState(null);
     const [employees, setEmployees] = useState([]);
+    const employee_id = 1;
+    const business_id = 1;
+    
+    const handleRemoveEmployee = (e) => {
+        e.preventDefault()
+        Axios.delete('http://localhost:8080/employee/:business_id/:employee_id', {
+            business_id: business_id, employee_id: employee_id
+        }).then((response) => {
+          console.log(response);
+        })
+    }
 
     useEffect(() => {
         const storedId = JSON.parse(localStorage.getItem("id"));
@@ -24,6 +38,7 @@ const EmployeePage = () => {
         <div className="container mx-auto">
         <h1 className="text-4xl flex justify-center font-bold mb-12">Employee Information</h1>
         <div className="overflow-x-auto">
+            <AddEmployee />
             <div className="min-w-full overflow-y-auto">
                 <table className="table-auto border-collapse ">
                     <thead>
@@ -49,6 +64,9 @@ const EmployeePage = () => {
                                 <td className="px-8 py-2">{employee.SALARY}</td>
                             </tr>
                         ))}
+                        <Button variant="outlined" startIcon={<DeleteIcon />} onClick={() => handleRemoveEmployee()}>
+                            Remove
+                        </Button>
                     </tbody>
                 </table>
             </div>
