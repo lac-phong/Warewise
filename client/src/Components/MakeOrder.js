@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
+import Axios from 'axios';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -17,10 +18,14 @@ import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 
-export default function GroupedSelect() {
+export default function MakeOrder() {
     const [open, setOpen] = React.useState(false);
-    const [age, setAge] = React.useState('');
     const [products, setProducts] = useState([{ product: '', quantity: '' }]);
+    const [businessId, setBusinessId] = useState();
+    const [supplierId, setSupplierId] = useState();
+    const [productId, setProductId] = useState();
+    const [quantity, setQuantity] = useState();
+    const [price, setPrice] = useState();
 
     const handleAddProduct = () => {
         setProducts([...products, { product: '', quantity: '' }]);
@@ -44,10 +49,6 @@ export default function GroupedSelect() {
         setProducts(updatedProducts);
     };
 
-    const handleChange = (event) => {
-        setAge(Number(event.target.value) || '');
-    };
-
     const handleClickOpen = () => {
         setOpen(true);
     };
@@ -57,6 +58,17 @@ export default function GroupedSelect() {
         setOpen(false);
         }
     };
+
+    const handleOrder = (e) => {
+        e.preventDefault();
+        Axios.post('http://localhost:8080/orders/:business_id/:supplier_id/:product_id/:quantity/:price', {
+          business_id: businessId, supplier_id: supplierId, product_id: productId, quantity: quantity, price: price 
+        }).then((response) => {
+          console.log(response);
+        })
+        setOpen(false);
+    };
+
     return (
         <div>
             <Button onClick={handleClickOpen}>Make a new order!</Button>
@@ -113,7 +125,7 @@ export default function GroupedSelect() {
                                         <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddProduct}>
                                             Add
                                         </Button>
-                                        {index > 0 && ( // Render remove button only if there's more than one product
+                                        {products.length > 1 && (
                                             <Button variant="outlined" startIcon={<DeleteIcon />} onClick={() => handleRemoveProduct(index)}>
                                                 Remove
                                             </Button>
@@ -129,7 +141,7 @@ export default function GroupedSelect() {
                 </DialogContent>
                 <DialogActions sx={{ m: 1 }}>
                     <Button onClick={handleClose}>Cancel</Button>
-                    <Button onClick={handleClose}>Place order</Button>
+                    <Button onClick={handleOrder}>Place order</Button>
                 </DialogActions>
             </Dialog>
         </div>
