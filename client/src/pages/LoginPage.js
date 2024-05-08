@@ -1,20 +1,25 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import Axios from "axios";
 import {Link, Navigate} from 'react-router-dom';
+import { UserContext } from '../UserContext.js';
 
 function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [redirect, setRedirect] = useState(false);
+    const {setUser} = useContext(UserContext);
 
-    const login = (e) => {
+    async function login (e) {
         e.preventDefault();
-        Axios.post('http://localhost:8080/login', { username: username, password: password })
-            .then((response) => {
-                localStorage.setItem("id", JSON.stringify(response.data));
-                setRedirect(true);
-                console.log(response);
-            });
+        try {
+            const {data} = await Axios.post('http://localhost:8080/login', { username: username, password: password  }, { withCredentials: true });
+            setUser(data);
+            alert('Logged in successfully');
+            setRedirect(true);
+
+        } catch (err) {
+            alert('Login failed.');
+        }
     };
 
     if (redirect) {
