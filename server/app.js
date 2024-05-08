@@ -123,16 +123,8 @@ app.post('/login', async (req, res) => {
 
 // ------------------------------------------------------------------------------------------------------------------------------------------------//
 
-// INTERNAL: get all businesses
-app.get('/businesses', async (req, res) => {
-    try {
-        const businesses = await getBusinesses();
-        res.send(businesses);
-    } catch(error) {
-        console.error('Error getting all businesses:', error)
-        res.status(500).json({ error: 'Internal server error' });
-    }
-})
+// ----------------------------------------------------------- ACCOUNT PAGE -----------------------------------------------------------------------//
+
 // EXTERNAL: get account page
 app.get('/getaccountpage/:business_id', async (req, res) => {
     const { business_id } = req.params;
