@@ -97,7 +97,6 @@ export async function insertBusiness(username, password, business_name, address)
     }
 }
 
-// TO DO: update
 export async function updateBusiness(business_id, username, password, business_name, address) {
     const sql = `
         UPDATE BUSINESS
@@ -288,7 +287,7 @@ export async function insertProduct(business_id, category_name, product_name, pr
     }
 }
 
-export async function getProductNameByBusiness(business_id, product_name) {
+export async function getProductByNameandBusiness(business_id, product_name) {
     const sql = `
         SELECT * FROM PRODUCTS 
         WHERE BUSINESS_ID = ? AND PRODUCT_NAME = ?;
@@ -506,19 +505,6 @@ export async function getSuppliersByCategory (business_id, supplier_category) {
 }
 
 export async function getSuppliers(business_id) {
-    const sql = `
-        SELECT * FROM SUPPLIERS
-        WHERE BUSINESS_ID = ?;
-    `;
-    try {
-        const [rows] = await pool.query(sql, [business_id]);
-        return rows;
-    } catch (error) {
-        throw new Error('Failed to retrieve suppliers for business: ' + error.message);
-    }
-}
-
-export async function getSuppliersByBusiness(business_id) {
     const sql = `
         SELECT * FROM SUPPLIERS 
         WHERE BUSINESS_ID = ?;
@@ -745,10 +731,11 @@ async function checkCustomerExists(customer_id, business_id) {
 // ---------------------------------------------------------------- SALES -------------------------------------------------------------------------//
 
 // done and triggers taking care of backend stuff
-export async function insertSale(business_id, product_id, quantity, order_date, payment_details, price) {
+// no price cause that's calculated automatically
+export async function insertSale(business_id, product_id, quantity, order_date, payment_details) {
     const sql = `
-        INSERT INTO SALES (BUSINESS_ID, PRODUCT_ID, QUANTITY, ORDER_DATE, PAYMENT_DETAILS, PRICE)
-        VALUES (?, ?, ?, ?, ?, ?);
+        INSERT INTO SALES (BUSINESS_ID, PRODUCT_ID, QUANTITY, ORDER_DATE, PAYMENT_DETAILS)
+        VALUES (?, ?, ?, ?, ?);
     `;
     try {
         // Check if the business exists
@@ -764,7 +751,7 @@ export async function insertSale(business_id, product_id, quantity, order_date, 
         }
 
         // Insert the sale; triggers will handle quantity and balance updates
-        const [result] = await pool.query(sql, [business_id, product_id, quantity, order_date, payment_details, price]);
+        const [result] = await pool.query(sql, [business_id, product_id, quantity, order_date, payment_details]);
         return { sale_id: result.insertId, inserted: true };
     } catch (error) {
         throw new Error('Failed to insert sale: ' + error.message);
@@ -977,51 +964,79 @@ async function checkBalanceExists(balance_id, business_id) {
 
 // --------------------------------------------------------------- ORDERS -------------------------------------------------------------------------//
 
-// TO DO: update by allowing them to input name instead of id
-export async function insertOrderWithDetails(business_id, product_id, quantity, price) {
-    const sqlOrder = `
-        INSERT INTO ORDERS (BUSINESS_ID, PRODUCT_ID, QUANTITY, PRICE)
-        VALUES (?, ?, ?, ?);
-    `;
+export async function insertMultipleProductOrder(business_id, supplier_id, products) {
+    const connection = await pool.getConnection();
     try {
-        const checkBusiness = await checkBusinessExists(business_id);
-        if (!checkBusiness) {
-            throw new Error('Business does not exist.');
+        await connection.beginTransaction();
+
+        const [lastOrder] = await connection.query(`SELECT MAX(ORDER_ID) AS last_order_id FROM ORDERS WHERE BUSINESS_ID = ?`, [business_id]);
+        const newOrderId = lastOrder[0].last_order_id ? lastOrder[0].last_order_id + 1 : 1;
+
+        for (let product of products) {
+            await insertOrderWithDetails(newOrderId, business_id, product.product_name, product.quantity, product.price, product.product_description);
+            const sqlJunction = `
+                INSERT INTO BUSINESS_ORDERS_SUPPLIERS (BUSINESS_ID, ORDER_ID, SUPPLIER_ID)
+                VALUES (?, ?, ?);
+            `;
+            await connection.query(sqlJunction, [business_id, newOrderId, supplier_id]);
         }
 
-        const [orderResult] = await pool.query(sqlOrder, [business_id, product_id, quantity, price]);
-        const supplier_id = determineSupplierForProduct(product_id);
-
-        const sqlJunction = `
-            INSERT INTO business_orders_suppliers (business_id, order_id, supplier_id)
-            VALUES (?, ?, ?);
-        `;
-        await pool.query(sqlJunction, [business_id, orderResult.insertId, supplier_id]);
-
-        return { order_id: orderResult.insertId, inserted: true };
+        await connection.commit();
+        return { order_id: newOrderId, inserted: true, products: products.length };
     } catch (error) {
+        await connection.rollback();
         throw new Error('Failed to insert order: ' + error.message);
+    } finally {
+        connection.release();
     }
 }
 
-// export async function getOrdersByBusiness(business_id) {
-//     const sql = `
-//         SELECT * FROM ORDERS 
-//         WHERE BUSINESS_ID = ?;
-//     `;
-//     try {
-//         // Check if the business exists
-//         const checkBusiness = await checkBusinessExists(business_id);
-//         if (!checkBusiness) {
-//             throw new Error('Business does not exist.');
-//         }
+async function insertOrderWithDetails(order_id, business_id, product_name, quantity, price, product_description) {
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
 
-//         const [rows] = await pool.query(sql, [business_id]);
-//         return rows;
-//     } catch (error) {
-//         throw new Error('Failed to retrieve orders: ' + error.message);
-//     }
-// }
+        const sqlFindProduct = `
+            SELECT PRODUCT_ID, QUANTITY FROM PRODUCTS
+            WHERE BUSINESS_ID = ? AND PRODUCT_NAME = ?;
+        `;
+        const [products] = await connection.query(sqlFindProduct, [business_id, product_name]);
+        
+        let product_id;
+
+        if (products.length > 0) {
+            product_id = products[0].PRODUCT_ID;
+            const newQuantity = products[0].QUANTITY + quantity;
+            const sqlUpdateProduct = `
+                UPDATE PRODUCTS
+                SET QUANTITY = ?
+                WHERE PRODUCT_ID = ?;
+            `;
+            await connection.query(sqlUpdateProduct, [newQuantity, product_id]);
+        } else {
+            const sqlInsertProduct = `
+                INSERT INTO PRODUCTS (BUSINESS_ID, PRODUCT_NAME, PRODUCT_DESCRIPTION, QUANTITY, PRICE)
+                VALUES (?, ?, ?, ?, ?);
+            `;
+            const [insertResult] = await connection.query(sqlInsertProduct, [business_id, product_name, product_description, quantity, price]);
+            product_id = insertResult.insertId;
+        }
+
+        const sqlOrder = `
+            INSERT INTO ORDERS (ORDER_ID, BUSINESS_ID, PRODUCT_ID, QUANTITY)
+            VALUES (?, ?, ?, ?);
+        `;
+        await connection.query(sqlOrder, [order_id, business_id, product_id, quantity]);
+
+        await connection.commit();
+        return { order_line_id: product_id, order_id: order_id, inserted: true };
+    } catch (error) {
+        await connection.rollback();
+        throw new Error('Failed to insert or update product/order detail: ' + error.message);
+    } finally {
+        connection.release();
+    }
+}
 
 export async function getOrderById(business_id, order_id) {
     const sql = `
@@ -1029,7 +1044,6 @@ export async function getOrderById(business_id, order_id) {
         WHERE ORDER_ID = ? AND BUSINESS_ID = ?;
     `;
     try {
-        // Check if the order exists for the business
         const checkOrder = await checkOrderExists(order_id, business_id);
         if (!checkOrder) {
             throw new Error('Order does not exist for this business.');
@@ -1047,16 +1061,14 @@ export async function getOrders(business_id) {
         SELECT 
             O.ORDER_ID,
             O.ORDER_DATE,
-            P.PRODUCT_NAME,
+            O.PRODUCT_NAME,
             O.QUANTITY,
             O.PRICE,
             S.SUPPLIER_NAME
         FROM 
             ORDERS O
         INNER JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
-        INNER JOIN 
-            business_orders_suppliers BOS ON O.ORDER_ID = BOS.order_id
+            BUSINESS_ORDERS_SUPPLIERS BOS ON O.ORDER_ID = BOS.order_id
         INNER JOIN 
             SUPPLIERS S ON BOS.supplier_id = S.SUPPLIER_ID
         WHERE
@@ -1065,6 +1077,7 @@ export async function getOrders(business_id) {
             O.ORDER_DATE DESC;
     `;
     try {
+        // Check if the business exists
         const checkBusiness = await checkBusinessExists(business_id);
         if (!checkBusiness) {
             throw new Error('Business does not exist.');
@@ -1081,16 +1094,14 @@ export async function getOrderDetailsById(order_id, business_id) {
     const sql = `
         SELECT 
             O.ORDER_DATE,
-            P.PRODUCT_NAME,
+            O.PRODUCT_NAME,
             O.QUANTITY,
             O.PRICE,
             S.SUPPLIER_NAME
         FROM 
             ORDERS O
         JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
-        JOIN 
-            business_orders_suppliers BOS ON O.ORDER_ID = BOS.order_id
+            BUSINESS_ORDERS_SUPPLIERS BOS ON O.ORDER_ID = BOS.order_id
         JOIN 
             SUPPLIERS S ON BOS.supplier_id = S.SUPPLIER_ID
         WHERE 
@@ -1099,18 +1110,13 @@ export async function getOrderDetailsById(order_id, business_id) {
             O.ORDER_DATE;
     `;
     try {
-        // Check if the order exists for the business
         const checkOrder = await checkOrderExists(order_id, business_id);
         if (!checkOrder) {
             throw new Error('Order does not exist for this business.');
         }
 
         const [rows] = await pool.query(sql, [business_id, order_id]);
-        if (rows.length) {
-            return rows;
-        } else {
-            throw new Error('No order found for the specified business and order ID');
-        }
+        return rows;
     } catch (error) {
         throw new Error('Failed to retrieve order details: ' + error.message);
     }
@@ -1120,16 +1126,14 @@ export async function getOrderBySupplier(business_id, supplier_id) {
     const sql = `
         SELECT 
             O.ORDER_DATE,
-            S.SUPPLIER_NAME,
-            P.PRODUCT_NAME,
+            O.PRODUCT_NAME,
             O.QUANTITY,
-            O.PRICE
+            O.PRICE,
+            S.SUPPLIER_NAME
         FROM 
             ORDERS O
         JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
-        JOIN 
-            business_orders_suppliers BOS ON O.ORDER_ID = BOS.order_id
+            BUSINESS_ORDERS_SUPPLIERS BOS ON O.ORDER_ID = BOS.order_id
         JOIN 
             SUPPLIERS S ON BOS.supplier_id = S.SUPPLIER_ID
         WHERE
@@ -1139,18 +1143,14 @@ export async function getOrderBySupplier(business_id, supplier_id) {
             O.ORDER_DATE;
     `;
     try {
-        // Check if the supplier exists for the business
-        const checkSupplier = await checkSupplierExists(supplier_id, business_id);
-        if (!checkSupplier) {
-            throw new Error('Supplier does not exist for this business.');
+        // Check if the business exists
+        const checkBusiness = await checkBusinessExists(business_id);
+        if (!checkBusiness) {
+            throw new Error('Business does not exist.');
         }
 
         const [rows] = await pool.query(sql, [business_id, supplier_id]);
-        if (rows.length) {
-            return rows;
-        } else {
-            throw new Error('No order found for the specified business and supplier');
-        }
+        return rows;
     } catch (error) {
         throw new Error('Failed to retrieve order: ' + error.message);
     }
@@ -1160,16 +1160,16 @@ export async function getOrderByDate(business_id, order_date) {
     const sql = `
         SELECT 
             O.ORDER_DATE,
-            S.SUPPLIER_NAME,
-            P.PRODUCT_NAME,
+            O.PRODUCT_NAME,
             O.QUANTITY,
-            O.PRICE
+            O.PRICE,
+            S.SUPPLIER_NAME
         FROM 
             ORDERS O
         JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
+            BUSINESS_ORDERS_SUPPLIERS BOS ON O.ORDER_ID = BOS.order_id
         JOIN 
-            SUPPLIERS S ON O.SUPPLIER_ID = S.SUPPLIER_ID
+            SUPPLIERS S ON BOS.supplier_id = S.SUPPLIER_ID
         WHERE
             O.BUSINESS_ID = ? AND 
             DATE(O.ORDER_DATE) = DATE(?)
@@ -1177,326 +1177,58 @@ export async function getOrderByDate(business_id, order_date) {
             O.ORDER_DATE;
     `;
     try {
+        // Check if the business exists
         const checkBusiness = await checkBusinessExists(business_id);
         if (!checkBusiness) {
             throw new Error('Business does not exist.');
         }
 
         const [rows] = await pool.query(sql, [business_id, order_date]);
-        if (rows.length) {
-            return rows;
-        } else {
-            throw new Error('No order found on date for the specified business');
-        }
+        return rows;
     } catch (error) {
         throw new Error('Failed to retrieve orders: ' + error.message);
     }
 }
 
-export async function getOrderBeforeDate(business_id, order_date) {
+export async function getOrderDetailsByProduct(business_id, product_name) {
     const sql = `
         SELECT 
             O.ORDER_DATE,
             S.SUPPLIER_NAME,
-            P.PRODUCT_NAME,
+            O.PRODUCT_NAME,
             O.QUANTITY,
             O.PRICE
         FROM 
             ORDERS O
         JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
-        JOIN 
-            SUPPLIERS S ON O.SUPPLIER_ID = S.SUPPLIER_ID
-        WHERE
-            O.BUSINESS_ID = ? AND 
-            DATE(O.ORDER_DATE) <= DATE(?)
-        ORDER BY 
-            O.ORDER_DATE;
-    `;
-    try {
-        const checkBusiness = await checkBusinessExists(business_id);
-        if (!checkBusiness) {
-            throw new Error('Business does not exist.');
-        }
-
-        const [rows] = await pool.query(sql, [business_id, order_date]);
-        if (rows.length) {
-            return rows;
-        } else {
-            throw new Error('No order found before date for the specified business');
-        }
-    } catch (error) {
-        throw new Error('Failed to retrieve orders: ' + error.message);
-    }
-}
-
-export async function getOrderAfterDate(business_id, order_date) {
-    const sql = `
-        SELECT 
-            O.ORDER_DATE,
-            S.SUPPLIER_NAME,
-            P.PRODUCT_NAME,
-            O.QUANTITY,
-            O.PRICE
-        FROM 
-            ORDERS O
-        JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
-        JOIN 
-            SUPPLIERS S ON O.SUPPLIER_ID = S.SUPPLIER_ID
-        WHERE
-            O.BUSINESS_ID = ? AND 
-            DATE(O.ORDER_DATE) >= DATE(?)
-        ORDER BY 
-            O.ORDER_DATE;
-    `;
-    try {
-        const checkBusiness = await checkBusinessExists(business_id);
-        if (!checkBusiness) {
-            throw new Error('Business does not exist.');
-        }
-
-        const [rows] = await pool.query(sql, [business_id, order_date]);
-        if (rows.length) {
-            return rows;
-        } else {
-            throw new Error('No order found after date for the specified business');
-        }
-    } catch (error) {
-        throw new Error('Failed to retrieve orders: ' + error.message);
-    }
-}
-
-export async function getOrderBetweenDates(business_id, order_date_1, order_date_2) {
-    const sql = `
-        SELECT 
-            O.ORDER_DATE,
-            S.SUPPLIER_NAME,
-            P.PRODUCT_NAME,
-            O.QUANTITY,
-            O.PRICE
-        FROM 
-            ORDERS O
-        JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
-        JOIN 
-            SUPPLIERS S ON O.SUPPLIER_ID = S.SUPPLIER_ID
-        WHERE 
-            O.BUSINESS_ID = ? AND
-            DATE(O.ORDER_DATE) BETWEEN DATE(?) AND DATE(?)
-        ORDER BY 
-            O.ORDER_DATE;
-    `;
-    try {
-        const checkBusiness = await checkBusinessExists(business_id);
-        if (!checkBusiness) {
-            throw new Error('Business does not exist.');
-        }
-
-        const [rows] = await pool.query(sql, [business_id, order_date_1, order_date_2]);
-        if (rows.length) {
-            return rows;
-        } else {
-            throw new Error('No orders found between the specified dates for the business');
-        }
-    } catch (error) {
-        throw new Error('Failed to retrieve orders: ' + error.message);
-    }
-}
-
-export async function getOrderDetailsByProduct(business_id, product_id) {
-    const sql = `
-        SELECT 
-            O.ORDER_DATE,
-            S.SUPPLIER_NAME,
-            P.PRODUCT_NAME,
-            O.QUANTITY,
-            O.PRICE
-        FROM 
-            ORDERS O
-        JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
-        JOIN 
-            business_orders_suppliers BOS ON O.ORDER_ID = BOS.order_id
+            BUSINESS_ORDERS_SUPPLIERS BOS ON O.ORDER_ID = BOS.order_id
         JOIN 
             SUPPLIERS S ON BOS.supplier_id = S.SUPPLIER_ID
         WHERE
             O.BUSINESS_ID = ? AND 
-            P.PRODUCT_ID = ?
+            O.PRODUCT_NAME = ?
         ORDER BY 
             O.ORDER_DATE;
     `;
     try {
-        // Check if the product exists for the business
-        const checkProduct = await checkProductExists(product_id, business_id);
-        if (!checkProduct) {
-            throw new Error('Product does not exist for this business.');
+        // Check if the business exists
+        const checkBusiness = await checkBusinessExists(business_id);
+        if (!checkBusiness) {
+            throw new Error('Business does not exist.');
         }
 
-        const [rows] = await pool.query(sql, [business_id, product_id]);
-        if (rows.length) {
-            return rows;
-        } else {
-            throw new Error('No order found with the specified product for the business');
-        }
+        const [rows] = await pool.query(sql, [business_id, product_name]);
+        return rows;
     } catch (error) {
         throw new Error('Failed to retrieve order details: ' + error.message);
-    }
-}
-
-export async function getOrderDetailsByPrice(business_id, price) {
-    const sql = `
-        SELECT 
-            O.ORDER_DATE,
-            S.SUPPLIER_NAME,
-            P.PRODUCT_NAME,
-            O.QUANTITY,
-            O.PRICE
-        FROM 
-            ORDERS O
-        JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
-        JOIN 
-            SUPPLIERS S ON O.SUPPLIER_ID = S.SUPPLIER_ID
-        WHERE
-            O.BUSINESS_ID = ? AND 
-            O.PRICE = ?
-        ORDER BY 
-            O.ORDER_DATE;
-    `;
-    try {
-        const checkBusiness = await checkBusinessExists(business_id);
-        if (!checkBusiness) {
-            throw new Error('Business does not exist.');
-        }
-
-        const [rows] = await pool.query(sql, [business_id, price]);
-        if (rows.length) {
-            return rows;
-        } else {
-            throw new Error('No order found with the specified price for the business');
-        }
-    } catch (error) {
-        throw new Error('Failed to retrieve order details: ' + error.message);
-    }
-}
-
-export async function getOrderBelowPrice(business_id, price) {
-    const sql = `
-        SELECT 
-            O.ORDER_DATE,
-            S.SUPPLIER_NAME,
-            P.PRODUCT_NAME,
-            O.QUANTITY,
-            O.PRICE
-        FROM 
-            ORDERS O
-        JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
-        JOIN 
-            SUPPLIERS S ON O.SUPPLIER_ID = S.SUPPLIER_ID
-        WHERE
-            O.BUSINESS_ID = ? AND 
-            O.PRICE <= ?
-        ORDER BY 
-            O.ORDER_DATE;
-    `;
-    try {
-        const checkBusiness = await checkBusinessExists(business_id);
-        if (!checkBusiness) {
-            throw new Error('Business does not exist.');
-        }
-
-        const [rows] = await pool.query(sql, [business_id, price]);
-        if (rows.length) {
-            return rows;
-        } else {
-            throw new Error('No order found with prices lower than given for the specified business');
-        }
-    } catch (error) {
-        throw new Error('Failed to retrieve orders: ' + error.message);
-    }
-}
-
-export async function getOrderAbovePrice(business_id, price) {
-    const sql = `
-        SELECT 
-            O.ORDER_DATE,
-            S.SUPPLIER_NAME,
-            P.PRODUCT_NAME,
-            O.QUANTITY,
-            O.PRICE
-        FROM 
-            ORDERS O
-        JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
-        JOIN 
-            SUPPLIERS S ON O.SUPPLIER_ID = S.SUPPLIER_ID
-        WHERE
-            O.BUSINESS_ID = ? AND 
-            O.PRICE >= ?
-        ORDER BY 
-            O.ORDER_DATE;
-    `;
-    try {
-        const checkBusiness = await checkBusinessExists(business_id);
-        if (!checkBusiness) {
-            throw new Error('Business does not exist.');
-        }
-
-        const [rows] = await pool.query(sql, [business_id, price]);
-        if (rows.length) {
-            return rows;
-        } else {
-            throw new Error('No order found with prices higher than given for the specified business');
-        }
-    } catch (error) {
-        throw new Error('Failed to retrieve orders: ' + error.message);
-    }
-}
-
-export async function getOrderBetweenPrices(business_id, price_1, price_2) {
-    const sql = `
-        SELECT 
-            O.ORDER_DATE,
-            S.SUPPLIER_NAME,
-            P.PRODUCT_NAME,
-            O.QUANTITY,
-            O.PRICE
-        FROM 
-            ORDERS O
-        JOIN 
-            PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
-        JOIN 
-            SUPPLIERS S ON O.SUPPLIER_ID = S.SUPPLIER_ID
-        WHERE 
-            O.BUSINESS_ID = ? AND
-            O.PRICE BETWEEN ? AND ?
-        ORDER BY 
-            O.ORDER_DATE;
-    `;
-    try {
-        const checkBusiness = await checkBusinessExists(business_id);
-        if (!checkBusiness) {
-            throw new Error('Business does not exist.');
-        }
-        
-        const [rows] = await pool.query(sql, [business_id, price_1, price_2]);
-        if (rows.length) {
-            return rows;
-        } else {
-            throw new Error('No order found with prices between the specified values for the business');
-        }
-    } catch (error) {
-        throw new Error('Failed to retrieve orders: ' + error.message);
     }
 }
 
 export async function updateOrderDetails(order_id, business_id, updates) {
-    const { product_id, quantity, price, order_date } = updates;
+    const { product_name, quantity, price, order_date } = updates;
     const sql = `
         UPDATE ORDERS
-        SET PRODUCT_ID = ?, QUANTITY = ?, PRICE = ?, ORDER_DATE = ?
+        SET PRODUCT_NAME = ?, QUANTITY = ?, PRICE = ?, ORDER_DATE = ?
         WHERE ORDER_ID = ? AND BUSINESS_ID = ?;
     `;
     try {
@@ -1506,7 +1238,7 @@ export async function updateOrderDetails(order_id, business_id, updates) {
             throw new Error('Order does not exist for this business.');
         }
 
-        const [result] = await pool.query(sql, [product_id, quantity, price, order_date, order_id, business_id]);
+        const [result] = await pool.query(sql, [product_name, quantity, price, order_date, order_id, business_id]);
         if (result.affectedRows) {
             return { updated: true };
         } else {
