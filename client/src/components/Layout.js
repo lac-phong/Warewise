@@ -4,11 +4,14 @@ import Header from './Header';
 
 const Layout = () => {
   const location = useLocation();
-  const showHeader = location.pathname !== '/';
+  const showHeader = location.pathname !== '/' && location.pathname !== '/register';
     return (
       <div className='p-4 flex flex-col min-h-screen'>
         {showHeader && <Header />}
-        <Outlet />
+        <div className='mt-4'>
+            <Outlet/>
+        </div>
+        
       </div>
     );
   };
