@@ -1,9 +1,8 @@
 import cors from 'cors'
 import express from 'express'
 
-import { 
-    insertAccount, 
-    getAccount,
+import {
+    getAccountPage,
   
     getBusiness,
     getBusinesses,
@@ -12,7 +11,6 @@ import {
     deleteBusiness,
 
     getLocations,
-    getLocation,
     getLocation,
     updateLocation,
     deleteLocation,
@@ -50,6 +48,13 @@ app.get("/businesses", async (req, res) => {
     res.send(businesses)
 })
 
+// EXTERNAL: get specific business account page
+app.get("/account_page/:business_id", async (req, res) => {
+    const id = req.params.business_id
+    const account_page = await getAccountPage(id)
+    res.send(account_page)
+})
+
 // EXTERNAL: get specific business
 app.get("/business/:business_id", async (req, res) => {
     const id = req.params.business_id
@@ -59,8 +64,8 @@ app.get("/business/:business_id", async (req, res) => {
 
 // EXTERNAL: insert specific business
 app.post("/business", async (req, res) => {
-    const { business_id, account_id, business_name } = req.body
-    const business = await insertBusiness(business_id, account_id, business_name)
+    const { username, password, business_name } = req.body
+    const business = await insertBusiness(username, password, business_name)
     res.status(201).send(business)
 })
 
@@ -138,24 +143,36 @@ app.get("/employee/:business_id/:employee_id", async (req, res) => {
 
 // EXTERNAL: add specific employee for a business
 app.post("/employee", async (req, res) => {
-    const { business_id, employee_id, first_name, last_name, email, phone, address, salary } = req.body;
-    const employee = await insertEmployee(business_id, employee_id, first_name, last_name, email, phone, address, salary);
-    res.status(201).send(employee);
+    const { business_id, first_name, last_name, email, phone, address, salary } = req.body;
+    try {
+        const employee = await insertEmployee(business_id, first_name, last_name, email, phone, address, salary);
+        res.status(201).send(employee);
+    } catch (error) {
+        res.status(400).send({ message: error.message });
+    }
 });
 
 // EXTERNAL: update specific employee for a business
 app.put("/employee/:business_id/:employee_id", async (req, res) => {
     const { business_id, employee_id } = req.params;
     const { first_name, last_name, email, phone, address, salary } = req.body;
-    const updatedEmployee = await updateEmployee(business_id, employee_id, first_name, last_name, email, phone, address, salary);
-    res.send(updatedEmployee);
+    try {
+        const updatedEmployee = await updateEmployee(business_id, employee_id, first_name, last_name, email, phone, address, salary);
+        res.send(updatedEmployee);
+    } catch (error) {
+        res.status(400).send({ message: error.message });
+    }
 });
 
 // EXTERNAL: delete specific employee for a business
 app.delete("/employee/:business_id/:employee_id", async (req, res) => {
     const { business_id, employee_id } = req.params;
-    await deleteEmployee(business_id, employee_id);
-    res.status(204).send();
+    try {
+        await deleteEmployee(business_id, employee_id);
+        res.status(204).send();
+    } catch (error) {
+        res.status(404).send({ message: error.message });
+    }
 });
 
 
