@@ -251,6 +251,7 @@ export async function deleteEmployee(business_id, employee_id) {
 
 // ------------------------------------------------------------- PRODUCTS -------------------------------------------------------------------------//
 
+// done
 export async function insertProduct(business_id, category_name, product_name, product_description, quantity, reorder_level, reorder_quantity, price, supplier_id) {
     const sqlProduct = `
         INSERT INTO PRODUCTS (BUSINESS_ID, CATEGORY_NAME, PRODUCT_NAME, PRODUCT_DESCRIPTION, QUANTITY, REORDER_LEVEL, REORDER_QUANTITY, PRICE)
@@ -267,10 +268,9 @@ export async function insertProduct(business_id, category_name, product_name, pr
         const [result] = await pool.query(sqlProduct, [business_id, category_name, product_name, product_description, quantity, reorder_level, reorder_quantity, price]);
         const product_id = result.insertId;
 
-        // Handle supplier_id, assuming it's provided
         if (supplier_id) {
             const sqlJunction = `
-                INSERT INTO business_product_supplier (business_id, product_id, supplier_id)
+                INSERT INTO BUSINESS_PRODUCT_SUPPLIER (BUSINESS_ID, PRODUCT_ID, SUPPLIER_ID)
                 VALUES (?, ?, ?);
             `;
 
@@ -413,6 +413,7 @@ async function checkProductExists(business_id, product_id) {
 
 // ------------------------------------------------------------ SUPPLIERS -------------------------------------------------------------------------//
 
+// done
 export async function insertSupplier(business_id, supplier_name, email, phone, address, supplier_category) {
     const sql = `
         INSERT INTO SUPPLIERS (BUSINESS_ID, SUPPLIER_NAME, EMAIL, PHONE, ADDRESS, SUPPLIER_CATEGORY)
@@ -435,10 +436,16 @@ export async function insertSupplier(business_id, supplier_name, email, phone, a
 export async function getSupplierInfo(business_id, supplier_id) {
     const sql = `
         SELECT SUPPLIER_NAME, EMAIL, PHONE, ADDRESS, SUPPLIER_CATEGORY 
-        FROM Suppliers
-        WHERE business_id = ? AND supplier_id = ?;
+        FROM SUPPLIERS
+        WHERE BUSINESS_ID = ? AND SUPPLIER_ID = ?;
     `;
     try {
+        // Check if the supplier exists for the business
+        const checkSupplier = await checkSupplierExists(supplier_id, business_id);
+        if (!checkSupplier) {
+            throw new Error('Supplier does not exist for this business.');
+        }
+
         const [rows] = await pool.query(sql, [business_id, supplier_id]);
         if (rows.length) {
             return rows[0];
@@ -450,10 +457,58 @@ export async function getSupplierInfo(business_id, supplier_id) {
     }
 }
 
+export async function getSuppliersCategories (business_id) {
+    const sql = `
+        SELECT SUPPLIER_ID, SUPPLIER_NAME, SUPPLIER_CATEGORY 
+        FROM SUPPLIERS
+        WHERE BUSINESS_ID = ?;
+    `;
+    try {
+        // Check if the business exists
+        const checkBusiness = await checkBusinessExists(business_id);
+        if (!checkBusiness) {
+            throw new Error('Business does not exist.');
+        }
+
+        const [rows] = await pool.query(sql, [business_id]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('Supplier not found');
+        }
+    } catch (error) {
+        throw new Error('Failed to retrieve suppliers categories: ' + error.message);
+    }
+}
+
+export async function getSuppliersByCategory (business_id, supplier_category) {
+    const sql = `
+        SELECT * 
+        FROM SUPPLIERS
+        WHERE BUSINESS_ID = ? AND SUPPLIER_CATEGORY = ?;
+    `;
+    try {
+        // Check if the business exists
+        const checkBusiness = await checkBusinessExists(business_id);
+        if (!checkBusiness) {
+            throw new Error('Business does not exist.');
+        }
+
+        const [rows] = await pool.query(sql, [business_id, supplier_category]);
+        if (rows.length) {
+            return rows[0];
+        } else {
+            throw new Error('Supplier not found');
+        }
+    } catch (error) {
+        throw new Error('Failed to retrieve suppliers based on categories: ' + error.message);
+    }
+}
+
 export async function getSuppliers(business_id) {
     const sql = `
-        SELECT * FROM Suppliers
-        WHERE business_id = ?;
+        SELECT * FROM SUPPLIERS
+        WHERE BUSINESS_ID = ?;
     `;
     try {
         const [rows] = await pool.query(sql, [business_id]);
@@ -482,7 +537,7 @@ export async function getSuppliersByBusiness(business_id) {
     }
 }
 
-export async function getSupplier(supplier_id, business_id) {
+export async function getSupplier (supplier_id, business_id) {
     const sql = `
         SELECT * FROM SUPPLIERS 
         WHERE SUPPLIER_ID = ? AND BUSINESS_ID = ?;
@@ -501,7 +556,7 @@ export async function getSupplier(supplier_id, business_id) {
     }
 }
 
-export async function updateSupplier(supplier_id, business_id, updates) {
+export async function updateSupplier (supplier_id, business_id, updates) {
     const { supplier_name, email, phone, address, supplier_category } = updates;
     const sql = `
         UPDATE SUPPLIERS
@@ -526,7 +581,7 @@ export async function updateSupplier(supplier_id, business_id, updates) {
     }
 }
 
-export async function deleteSupplier(supplier_id, business_id) {
+export async function deleteSupplier (supplier_id, business_id) {
     const sql = `
         DELETE FROM SUPPLIERS 
         WHERE SUPPLIER_ID = ? AND BUSINESS_ID = ?;
@@ -549,7 +604,7 @@ export async function deleteSupplier(supplier_id, business_id) {
     }
 }
 
-async function checkSupplierExists(supplier_id, business_id) {
+async function checkSupplierExists (supplier_id, business_id) {
     const sql = `
         SELECT 1 FROM SUPPLIERS 
         WHERE SUPPLIER_ID = ? AND BUSINESS_ID = ?;
@@ -566,6 +621,7 @@ async function checkSupplierExists(supplier_id, business_id) {
 
 // ------------------------------------------------------------ CUSTOMERS -------------------------------------------------------------------------//
 
+// done
 export async function insertCustomer(business_id, first_name, last_name, email, phone, address) {
     const sql = `
         INSERT INTO CUSTOMERS (BUSINESS_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE, ADDRESS)
@@ -688,55 +744,30 @@ async function checkCustomerExists(customer_id, business_id) {
 
 // ---------------------------------------------------------------- SALES -------------------------------------------------------------------------//
 
-export async function insertSale(business_id, product_id, quantity, payment_details, price) {
-    const connection = await pool.getConnection();
+// done and triggers taking care of backend stuff
+export async function insertSale(business_id, product_id, quantity, order_date, payment_details, price) {
+    const sql = `
+        INSERT INTO SALES (BUSINESS_ID, PRODUCT_ID, QUANTITY, ORDER_DATE, PAYMENT_DETAILS, PRICE)
+        VALUES (?, ?, ?, ?, ?, ?);
+    `;
     try {
-        await connection.beginTransaction();
-
-        const checkBusiness = await checkBusinessExists(business_id, connection);
+        // Check if the business exists
+        const checkBusiness = await checkBusinessExists(business_id);
         if (!checkBusiness) {
             throw new Error('Business does not exist.');
         }
 
-        const productSql = `
-            SELECT QUANTITY FROM PRODUCTS 
-            WHERE PRODUCT_ID = ? AND BUSINESS_ID = ?
-        `;
-        const [product] = await connection.query(productSql, [product_id, business_id]);
-        if (product.length === 0) {
+        // Optionally, check if the product exists
+        const checkProduct = await checkProductExists(product_id, business_id);
+        if (!checkProduct) {
             throw new Error('Product does not exist.');
         }
-        if (product[0].QUANTITY < quantity) {
-            throw new Error('Not enough stock.');
-        }
 
-        const newQuantity = product[0].QUANTITY - quantity;
-        const updateProductSql = `
-            UPDATE PRODUCTS SET QUANTITY = ? 
-            WHERE PRODUCT_ID = ? AND BUSINESS_ID = ?
-        `;
-        await connection.query(updateProductSql, [newQuantity, product_id, business_id]);
-
-        const sql = `
-            INSERT INTO SALES (BUSINESS_ID, PRODUCT_ID, QUANTITY, PAYMENT_DETAILS, PRICE)
-            VALUES (?, ?, ?, ?, ?);
-        `;
-        const [result] = await connection.query(sql, [business_id, product_id, quantity, order_date, payment_details, price]);
-
-        const balanceSql = `
-            UPDATE BALANCE 
-            SET BALANCE = BALANCE + ? 
-            WHERE BUSINESS_ID = ?
-        `;
-        await connection.query(balanceSql, [price * quantity, business_id]);
-
-        await connection.commit();
+        // Insert the sale; triggers will handle quantity and balance updates
+        const [result] = await pool.query(sql, [business_id, product_id, quantity, order_date, payment_details, price]);
         return { sale_id: result.insertId, inserted: true };
     } catch (error) {
-        await connection.rollback();
         throw new Error('Failed to insert sale: ' + error.message);
-    } finally {
-        connection.release();
     }
 }
 
@@ -843,6 +874,7 @@ async function checkSaleExists(sale_id, business_id) {
 
 // -------------------------------------------------------------- BALANCE -------------------------------------------------------------------------//
 
+// done
 export async function insertBalance(business_id, balance) {
     const sql = `
         INSERT INTO BALANCE (BUSINESS_ID, BALANCE)
@@ -945,6 +977,7 @@ async function checkBalanceExists(balance_id, business_id) {
 
 // --------------------------------------------------------------- ORDERS -------------------------------------------------------------------------//
 
+// TO DO: update by allowing them to input name instead of id
 export async function insertOrderWithDetails(business_id, product_id, quantity, price) {
     const sqlOrder = `
         INSERT INTO ORDERS (BUSINESS_ID, PRODUCT_ID, QUANTITY, PRICE)
