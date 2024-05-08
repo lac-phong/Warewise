@@ -100,7 +100,7 @@ app.post('/login', async (req, res) => {
         if (!userId) {
             return res.status(422).json('Account not found');
         }
-        const userInfo = await getBusinessInfo(userId.business_id);
+        const userInfo = await getBusinessInfo(userId.BUSINESS_ID);
         console.log(password)
         const passwordMatch = bcrypt.compareSync(password, userInfo.PASSWORD);
         if (!passwordMatch) {
@@ -128,7 +128,11 @@ app.get('/businesses', async (req, res) => {
     try {
         const businesses = await getBusinesses();
         res.send(businesses);
-      
+    } catch(error) {
+        console.error('Error getting all businesses:', error)
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
 // EXTERNAL: get account page
 app.get('/getaccountpage/:business_id', async (req, res) => {
     const { business_id } = req.params;
@@ -272,7 +276,8 @@ app.delete("/employee/:employee_id", async (req, res) => {
         })
     } else {
         res.status(404).json(null)
-      
+    }
+})
 // ------------------------------------------------------------------------------------------------------------------------------------------------//
 
 // --------------------------------------------------------------- ORDERS -------------------------------------------------------------------------//
@@ -752,7 +757,6 @@ app.delete('/product/:business_id/:product_id', async (req, res) => {
     }
 });
 
-// ------------------------------------------------------------------------------------------------------------------------------------------------//
 
 app.listen(8080, () => {
     console.log('Server is running on port 8080')
