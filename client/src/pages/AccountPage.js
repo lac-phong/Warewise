@@ -4,24 +4,13 @@ import { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom';
 
 function AccountPage() {
-  const [id, setId] = useState(null);
   const [user, setUser] = useState(null);
   const [redirect, setRedirect] = useState(false);
 
   useEffect(() => {
-    const storedId = JSON.parse(localStorage.getItem("id"));
-    if (storedId && storedId.business_id) {
-        setId(storedId.business_id);
-        console.log('registered', storedId.business_id);
-
-        Axios.get(`http://localhost:8080/business/${storedId.business_id}`)
-            .then(({data}) => {
-                setUser(data);
-            })
-            .catch(error => {
-                console.error('Error fetching business data:', error);
-            });
-    }
+    Axios.get(`http://localhost:8080/business`, {withCredentials: true}).then(({data}) => {
+      setUser(data);
+    });
   }, []);
 
   if (!user) {
@@ -38,7 +27,7 @@ function AccountPage() {
   }
 
   return (
-    <div className="mx-4 font h-screen">
+    <div className="mx-4 font mt-12 h-screen">
         <div className="mb-8 text-center">
           <h1 className="text-5xl">Welcome to <span className="text-blue-300">Warewise</span>, {user.USERNAME}!</h1>
         </div>

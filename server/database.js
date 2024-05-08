@@ -52,13 +52,14 @@ export async function getBusinesses() {
     }
 }
 
-export async function getBusinessId(username, password) {
+export async function getBusinessId(username) {
     const sql = `
         SELECT BUSINESS_ID FROM BUSINESS
-        WHERE USERNAME = ? AND PASSWORD = ?;
+        WHERE USERNAME = ?;
     `;
+    console.log(username)
     try {
-        const [rows] = await pool.query(sql, [username, password]);
+        const [rows] = await pool.query(sql, [username]);
         if (rows.length) {
             return rows[0];
         } else {
