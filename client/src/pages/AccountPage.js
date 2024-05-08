@@ -38,7 +38,7 @@ function AccountPage() {
   }
 
   return (
-    <div className="mx-4 font mt-12 h-screen">
+    <div className="mx-4 font h-screen">
         <div className="mb-8 text-center">
           <h1 className="text-5xl">Welcome to <span className="text-blue-300">Warewise</span>, {user.USERNAME}!</h1>
         </div>

@@ -22,7 +22,7 @@ function Login() {
     }
 
     return (
-        <div className="font mt-4 h-screen flex justify-center items-center">
+        <div className="font h-screen flex justify-center items-center">
             <div>
                 <h1 className="text-5xl text-center mb-8">Login to <span className="text-blue-300">Warewise</span></h1>
                 <form className="max-w-md mx-auto" onSubmit={login}>
