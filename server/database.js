@@ -111,7 +111,7 @@ export async function updateBusiness(business_id, username, password, business_n
     `;
 
     try {
-        const [result] = await pool.query(sql, [business_id, username, password, business_name, address]);
+        const [result] = await pool.query(sql, [username, password, business_name, address, business_id]);
         if (result.affectedRows) {
             return { business_id, username, password, business_name };
         } else {
@@ -157,18 +157,6 @@ async function checkBusinessExists(business_id) {
 // ------------------------------------------------------------------------------------------------------------------------------------------------//
 
 // ------------------------------------------------------------ EMPLOYEES -------------------------------------------------------------------------//
-
-export async function getEmployees() {
-    const sql = `
-        SELECT * FROM EMPLOYEES;
-    `;
-    try {
-        const [rows] = await pool.query(sql);
-        return rows;
-    } catch (error) {
-        throw new Error('Failed to retrieve all employees: ' + error.message);
-    }
-}
 
 export async function getEmployeesByBusiness(business_id) {
     const sql = `
@@ -529,7 +517,7 @@ export async function getSuppliers(business_id) {
     }
 }
 
-export async function getSupplier (supplier_id, business_id) {
+export async function getSupplier(supplier_id, business_id) {
     const sql = `
         SELECT * FROM SUPPLIERS 
         WHERE SUPPLIER_ID = ? AND BUSINESS_ID = ?;
