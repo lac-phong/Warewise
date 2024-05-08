@@ -89,6 +89,7 @@ app.post('/login', async (req, res) => {
         jwt.sign(tokenPayload, jwtSecret, {}, (err, token) => {
             if (err) throw err;
             res.cookie('token', token).json(tokenPayload);
+            console.log('Token info,', tokenPayload)
         });
     } catch (error) {
         console.error('Error during login:', error);
@@ -109,14 +110,12 @@ app.get('/businesses', authenticateToken, async (req, res) => {
 });
 
 app.get("/business", async (req, res) => {
-    console.log('Req', req.cookies)
     const {token} = req.cookies;
-    console.log('Token', token)
     if (token) {
         jwt.verify(token, jwtSecret, {}, async (err, userData) => {
             console.log('Retrieved userData:', userData);
             if (err) throw err;
-            const businessInfo = await getBusinessInfo(userData.BUSINESS_ID); 
+            const businessInfo = await getBusinessInfo(userData.business_id); 
             console.log('BusinessInfo:', businessInfo); 
             res.json(businessInfo);
         });

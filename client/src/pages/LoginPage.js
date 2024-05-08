@@ -12,10 +12,11 @@ function Login() {
     async function login (e) {
         e.preventDefault();
         try {
-            const {data} = await Axios.post('http://localhost:8080/login', { username: username, password: password  });
+            const {data} = await Axios.post('http://localhost:8080/login', { username: username, password: password  }, { withCredentials: true });
             setUser(data);
             alert('Logged in successfully');
             setRedirect(true);
+
         } catch (err) {
             alert('Login failed.');
         }
