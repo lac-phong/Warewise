@@ -2,6 +2,8 @@ import cors from 'cors'
 import express from 'express'
 
 import {
+    getAccountPage,
+
     getBusinessId,
     getBusinessInfo,
     insertBusiness,
@@ -83,6 +85,21 @@ app.post('/login', async (req, res) => {
     const user = await getBusinessId( username, password )
     res.send(user)
 })
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------//
+
+// ----------------------------------------------------------- ACCOUNT PAGE -----------------------------------------------------------------------//
+
+// EXTERNAL: get account page
+app.get('/getaccountpage/:business_id', async (req, res) => {
+    const { business_id } = req.params;
+    try {
+        const accountPage = await getAccountPage(business_id);
+        res.json(accountPage);
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+});
 
 // ------------------------------------------------------------------------------------------------------------------------------------------------//
 

@@ -19,6 +19,12 @@ export async function getAccountPage(business_id) {
         WHERE BUS.BUSINESS_ID = ?;
     `;
     try {
+        // Check if the business exists
+        const checkBusiness = await checkBusinessExists(business_id);
+        if (!checkBusiness) {
+            throw new Error('Business does not exist.');
+        }
+
         const [rows] = await pool.query(sql, [business_id]);
         if (rows.length) {
             return rows[0];
