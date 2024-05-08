@@ -195,7 +195,7 @@ app.delete('/employee/:business_id/:employee_id', async (req, res) => {
 // --------------------------------------------------------------- ORDERS -------------------------------------------------------------------------//
 
 // EXTERNAL: insert multiple products in the same order
-post('/allOrders', async (req, res) => {
+app.post('/allOrders', async (req, res) => {
     const { business_id, supplier_id, products } = req.body;
     try {
         const result = await insertMultipleProductOrder(business_id, supplier_id, products);
