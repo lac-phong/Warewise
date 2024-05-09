@@ -36,8 +36,6 @@ import {
     getSuppliersCategories, 
     getSuppliersByCategory, 
     getSuppliers,  
-    getSupplier, 
-    updateSupplier, 
     deleteSupplier,
 
     insertCustomer,
@@ -63,7 +61,8 @@ import {
     getProductsByBusiness,
     getProductByBusiness,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getSupplierByOrder
 } from './database.js'
 
 dotenv.config();
@@ -303,6 +302,17 @@ app.post('/allOrders', async (req, res) => {
     }
 });
 
+// INTERNAL: insert multiple products in the same order (TEST)
+app.post('/allOrdersTest', async (req, res) => {
+    const { business_id, supplier_id, products } = req.body;
+    try {
+        const result = await insertMultipleProductOrder(business_id, supplier_id, products);
+        res.status(201).json(result);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // EXTERNAL: get an order by its ID
 app.get('/orders/:order_id', async (req, res) => {
     const {token} = req.cookies;
@@ -321,7 +331,7 @@ app.get('/orders/:order_id', async (req, res) => {
 });
 
 // EXTERNAL: get all orders for a business
-app.get('/orders/:business_id', async (req, res) => {
+app.get('/orders', async (req, res) => {
     const {token} = req.cookies;
     if (token) {
         jwt.verify(token, jwtSecret, {}, async (err, userData) => {
@@ -548,6 +558,23 @@ app.get('/supplier/:supplier_id', async (req, res) => {
     }
 });
 
+// EXTERNAL: get supplier ID from business id and order id
+app.get('/supplier/:order_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { order_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getSupplierByOrder(userData.business_id, order_id);
+            console.log('Supplier ID:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
+    }
+});
+
 // Update a supplier
 app.put('/supplier/:supplier_id', async (req, res) => {
     const {token} = req.cookies;
@@ -693,6 +720,18 @@ app.post('/sales', async (req, res) => {
     }
 });
 
+// INTERNAL: insert a new sale (TEST)
+app.post('/salesTest/:business_id', async (req, res) => {
+    const { business_id } = req.params;
+    const { product_id, quantity, payment_details } = req.body;
+    try {
+        const result = await insertSale(business_id, product_id, quantity, payment_details);
+        res.status(201).send(result);
+    } catch (error) {
+        res.status(500).send({ error: error.message });
+    }
+});
+
 // EXTERNAL: get all sales for a specific business
 app.get('/sales', async (req, res) => {
     const {token} = req.cookies;
@@ -797,7 +836,6 @@ app.get('/balance', async (req, res) => {
         res.json(null);
     }
 });
-
 // EXTERNAL: update a specific balance record
 app.put('/balance/:balance_id', async (req, res) => {
     const {token} = req.cookies;

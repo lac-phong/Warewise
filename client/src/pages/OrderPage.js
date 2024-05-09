@@ -33,7 +33,9 @@ function OrderPage() {
           </Select>
         </FormControl>
       </div>
-      <OrderList />
+      <div>
+        <OrderList />
+      </div>
     </div>
   );
 }

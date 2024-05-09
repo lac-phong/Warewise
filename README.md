@@ -78,8 +78,9 @@ Once both the server and client are running, access the application by navigatin
   - Contributed to presentation slides
   - Contributed to presentation recording
 
-  
+
 - **Lac Phong-Nguyen**
+
 
 - **Shreya Raj**
   - Designed UI through Figma
@@ -88,13 +89,13 @@ Once both the server and client are running, access the application by navigatin
   - Created presentation slides
   - Contributed to presentation recording
 
+
 - **Natalie Kao**
   - Created Add Supplier Page
   - Initialized React Native project
   - Designed UI through Figma
   - Created presentation slides
   - Contributed to presentation recording
-   
 
 
 - **Nyun Ei Hlaing**
