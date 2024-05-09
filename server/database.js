@@ -977,12 +977,13 @@ export async function insertMultipleProductOrder(business_id, supplier_id, produ
 
         for (let product of products) {
             await insertOrderWithDetails(newOrderId, business_id, product.product_name, product.quantity, product.price, product.product_description);
-            const sqlJunction = `
-                INSERT INTO BUSINESS_ORDERS_SUPPLIERS (BUSINESS_ID, ORDER_ID, SUPPLIER_ID)
-                VALUES (?, ?, ?);
-            `;
-            await connection.query(sqlJunction, [business_id, newOrderId, supplier_id]);
         }
+
+        const sqlJunction = `
+            INSERT INTO BUSINESS_ORDERS_SUPPLIERS (BUSINESS_ID, ORDER_ID, SUPPLIER_ID)
+            VALUES (?, ?, ?);
+        `;
+        await connection.query(sqlJunction, [business_id, newOrderId, supplier_id]);
 
         await connection.commit();
         return { order_id: newOrderId, inserted: true, products: products.length };
@@ -1026,10 +1027,10 @@ async function insertOrderWithDetails(order_id, business_id, product_name, quant
         }
 
         const sqlOrder = `
-            INSERT INTO ORDERS (ORDER_ID, BUSINESS_ID, PRODUCT_ID, QUANTITY)
+            INSERT INTO ORDERS (ORDER_ID, BUSINESS_ID, PRODUCT_NAME, QUANTITY)
             VALUES (?, ?, ?, ?);
         `;
-        await connection.query(sqlOrder, [order_id, business_id, product_id, quantity]);
+        await connection.query(sqlOrder, [order_id, business_id, product_name, quantity]);
 
         await connection.commit();
         return { order_line_id: product_id, order_id: order_id, inserted: true };
