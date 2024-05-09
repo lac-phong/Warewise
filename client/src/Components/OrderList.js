@@ -25,6 +25,15 @@ function OrderList(props) {
         }
     }
 
+    const fetchSupplierName = async () => {
+        try {
+            const response = await Axios.get('http://localhost:8080/supplier', {supplier_id: supplierId}, {withCredentials: true})
+            setSupplierNames(response.SUPPLIER_NAME)
+        } catch (error) {
+            console.error('Error fetching supplier names:', error)
+        }
+    }
+
     useEffect(() => {
         const fetchData = async () => {
         try {
@@ -60,7 +69,6 @@ function OrderList(props) {
                 <th className="px-8 py-2">Order date</th>
                 <th className="px-8 py-2">Supplier</th>
                 <th className="px-8 py-2">Product</th>
-                <th className="px-8 py-2">Product Category</th>
                 <th className="px-8 py-2">Description</th>
                 <th className="px-8 py-2">Quantity</th>
                 <th className="px-8 py-2">Price</th>
