@@ -75,6 +75,7 @@ Once both the server and client are running, access the application by navigatin
   - Contributed to database.js
   - Contributed to app.js
   - Tested backend requests
+  - Contributed to presentation slides
   
 - **Lac Phong-Nguyen**
 
