@@ -76,14 +76,24 @@ Once both the server and client are running, access the application by navigatin
   - Contributed to app.js
   - Tested backend requests
   - Contributed to presentation slides
+  - Contributed to presentation recording
+
   
 - **Lac Phong-Nguyen**
 
 - **Shreya Raj**
+  - Designed UI through Figma
+  - Created Inventory Page
+  - Created Customer Transaction Page
+  - Created presentation slides
+  - Contributed to presentation recording
 
 - **Natalie Kao**
   - Created Add Supplier Page
+  - Designed UI through Figma
   - Created presentation slides
+  - Contributed to presentation recording
+
 
 - **Nyun Ei Hlaing**
   - Created Log in, Register, Account, and Employee pages
