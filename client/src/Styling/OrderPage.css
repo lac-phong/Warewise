@@ -15,6 +15,7 @@ h1 {
 
 .search {
     width: 30%;
+    display: flex;
 }
 
 ul li {

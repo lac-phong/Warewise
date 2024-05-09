@@ -95,25 +95,13 @@ export default function MakeOrder() {
                         <div>
                             {products.map((product, index) => (
                                 <div key={index} style={{ display: 'flex', alignItems: 'center' }}>
-                                    <FormControl sx={{ m: 1, minWidth: 120 }}>
-                                        <InputLabel htmlFor={`product-select-${index}`}>Product</InputLabel>
-                                        <Select
-                                            value={product.product}
-                                            onChange={(e) => handleProductChange(index, e)}
-                                            id={`product-select-${index}`}
-                                            label="Grouping"
-                                        >
-                                            <MenuItem value="">
-                                                <em>None</em>
-                                            </MenuItem>
-                                            <ListSubheader>Category 1</ListSubheader>
-                                            <MenuItem value={1}>Option 1</MenuItem>
-                                            <MenuItem value={2}>Option 2</MenuItem>
-                                            <ListSubheader>Category 2</ListSubheader>
-                                            <MenuItem value={3}>Option 3</MenuItem>
-                                            <MenuItem value={4}>Option 4</MenuItem>
-                                        </Select>
-                                    </FormControl>
+                                    <TextField
+                                        sx={{ m: 1, width: 100, maxWidth: '100%' }}
+                                        label="Product"
+                                        value={product.quantity}
+                                        onChange={(e) => handleProductChange(index, e)}
+                                        id={`product-select-${index}`}
+                                    />
                                     <TextField
                                         sx={{ m: 1, width: 100, maxWidth: '100%' }}
                                         label="Quantity"
@@ -133,9 +121,6 @@ export default function MakeOrder() {
                                     </Stack>
                                 </div>
                             ))}
-                        </div>
-                        <div style={{ marginTop: '10px', marginLeft: '10px' }}>
-                            <p>Total: PLACEHOLDER</p>
                         </div>
                     </Box>
                 </DialogContent>
