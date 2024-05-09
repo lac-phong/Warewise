@@ -70,6 +70,11 @@ Once both the server and client are running, access the application by navigatin
 # Division of Work
 
 - **Rohith Iyengar**
+  - Contributed to creation of database schema
+  - Normalization to BCNF
+  - Contributed to database.js
+  - Contributed to app.js
+  - Tested backend requests
   
 - **Lac Phong-Nguyen**
 
