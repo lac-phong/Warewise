@@ -247,6 +247,9 @@ export async function deleteEmployee(business_id, employee_id) {
 
 // done
 export async function insertProduct(business_id, category_name, product_name, product_description, quantity, reorder_level, reorder_quantity, price, supplier_id) {
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
     const sqlProduct = `
         INSERT INTO PRODUCTS (BUSINESS_ID, CATEGORY_NAME, PRODUCT_NAME, PRODUCT_DESCRIPTION, QUANTITY, REORDER_LEVEL, REORDER_QUANTITY, PRICE)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?);
@@ -259,7 +262,7 @@ export async function insertProduct(business_id, category_name, product_name, pr
         }
 
         // Insert the product
-        const [result] = await pool.query(sqlProduct, [business_id, category_name, product_name, product_description, quantity, reorder_level, reorder_quantity, price]);
+        const [result] = await connection.query(sqlProduct, [business_id, category_name, product_name, product_description, quantity, reorder_level, reorder_quantity, price]);
         const product_id = result.insertId;
 
         if (supplier_id) {
@@ -273,12 +276,17 @@ export async function insertProduct(business_id, category_name, product_name, pr
             if (!checkSupplier) {
                 throw new Error(`Supplier with ID ${supplier_id} does not exist in this business.`);
             }
-            await pool.query(sqlJunction, [business_id, product_id, supplier_id]);
+
+            await connection.query(sqlJunction, [business_id, product_id, supplier_id]);
         }
 
+        await connection.commit();
         return { product_id, inserted: true };
     } catch (error) {
+        await connection.rollback();
         throw new Error('Failed to insert product: ' + error.message);
+    } finally {
+        connection.release();
     }
 }
 
