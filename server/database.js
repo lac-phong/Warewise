@@ -13,7 +13,7 @@ const pool = mysql.createPool({
 
 export async function getAccountPage(business_id) {
     const sql = `
-        SELECT BUS.BUSINESS_ID, BUS.BUSINESS_NAME, BAL.BALANCE
+        SELECT BUS.BUSINESS_ID, BUS.BUSINESS_NAME, BAL.BALANCE, BUS.ADDRESS, BUS.CREATION_DATE, BUS.USERNAME
         FROM BUSINESS BUS
         JOIN BALANCE BAL ON BUS.BUSINESS_ID = BAL.BUSINESS_ID
         WHERE BUS.BUSINESS_ID = ?;
@@ -94,8 +94,15 @@ export async function insertBusiness(username, password, business_name, address)
     `;
     try {
         const [result] = await pool.query(sql, [username, password, business_name, address]);
-        if (result.affectedRows) {
-            return { username, password, business_name, inserted: true };
+        if (result.affectedRows && result.insertId) {
+            const business_id = result.insertId;
+            // Initialize balance to 0
+            const balanceResult = await insertBalance(business_id, 0);
+            if (balanceResult.inserted) {
+                return { username, password, business_name, inserted: true, balanceInitialized: true };
+            } else {
+                throw new Error('Failed to initialize balance');
+            }
         } else {
             throw new Error('Insert failed, no rows affected');
         }
@@ -545,6 +552,19 @@ export async function getSupplier(supplier_id, business_id) {
     }
 }
 
+export async function getSupplierByOrder(business_id, order_id) {
+    const sql = `
+        SELECT SUPPLIER_ID FROM BUSINESS_ORDERS_SUPPLIERS
+        WHERE BUSINESS_ID = ? AND ORDER_ID = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id, order_id]);
+        return rows[0];
+    } catch (error) {
+        throw new Error('Failed to retrieve supplier: ' + error.message);
+    }
+}
+
 export async function updateSupplier (supplier_id, business_id, updates) {
     const { supplier_name, email, phone, address, supplier_category } = updates;
     const sql = `
@@ -878,7 +898,11 @@ export async function insertBalance(business_id, balance) {
         }
 
         const [result] = await pool.query(sql, [business_id, balance]);
-        return { balance_id: result.insertId, inserted: true };
+        if (result.affectedRows) {
+            return { balance_id: result.insertId, inserted: true };
+        } else {
+            throw new Error('Insert failed, no rows affected');
+        }
     } catch (error) {
         throw new Error('Failed to insert balance: ' + error.message);
     }
@@ -903,20 +927,32 @@ export async function getBalanceByBusiness(business_id) {
     }
 }
 
-export async function updateBalance(balance_id, business_id, new_balance) {
+export async function addBalance(business_id, new_balance) {
     const sql = `
         UPDATE BALANCE
-        SET BALANCE = ?
-        WHERE BALANCE_ID = ? AND BUSINESS_ID = ?;
+        SET BALANCE = BALANCE + ?
+        WHERE BUSINESS_ID = ?;
     `;
     try {
-        // Check if the balance exists for the business
-        const checkBalance = await checkBalanceExists(balance_id, business_id);
-        if (!checkBalance) {
-            throw new Error('Balance record does not exist for this business.');
+        const [result] = await pool.query(sql, [new_balance, business_id]);
+        if (result.affectedRows) {
+            return { updated: true };
+        } else {
+            throw new Error('No balance record found for update');
         }
+    } catch (error) {
+        throw new Error('Failed to update balance: ' + error.message);
+    }
+}
 
-        const [result] = await pool.query(sql, [new_balance, balance_id, business_id]);
+export async function subtractBalance(business_id, new_balance) {
+    const sql = `
+        UPDATE BALANCE
+        SET BALANCE = BALANCE - ?
+        WHERE BUSINESS_ID = ?;
+    `;
+    try {
+        const [result] = await pool.query(sql, [new_balance, business_id]);
         if (result.affectedRows) {
             return { updated: true };
         } else {
@@ -976,13 +1012,14 @@ export async function insertMultipleProductOrder(business_id, supplier_id, produ
         const newOrderId = lastOrder[0].last_order_id ? lastOrder[0].last_order_id + 1 : 1;
 
         for (let product of products) {
-            await insertOrderWithDetails(newOrderId, business_id, product.product_name, product.quantity, product.price, product.product_description);
-            const sqlJunction = `
-                INSERT INTO BUSINESS_ORDERS_SUPPLIERS (BUSINESS_ID, ORDER_ID, SUPPLIER_ID)
-                VALUES (?, ?, ?);
-            `;
-            await connection.query(sqlJunction, [business_id, newOrderId, supplier_id]);
+            await insertOrderWithDetails(newOrderId, business_id, product.product_name, product.category_name, product.quantity, product.price, product.product_description);
         }
+
+        const sqlJunction = `
+            INSERT INTO BUSINESS_ORDERS_SUPPLIERS (BUSINESS_ID, ORDER_ID, SUPPLIER_ID)
+            VALUES (?, ?, ?);
+        `;
+        await connection.query(sqlJunction, [business_id, newOrderId, supplier_id]);
 
         await connection.commit();
         return { order_id: newOrderId, inserted: true, products: products.length };
@@ -994,7 +1031,7 @@ export async function insertMultipleProductOrder(business_id, supplier_id, produ
     }
 }
 
-async function insertOrderWithDetails(order_id, business_id, product_name, quantity, price, product_description) {
+async function insertOrderWithDetails(order_id, business_id, product_name, category_name, quantity, price, product_description) {
     const connection = await pool.getConnection();
     try {
         await connection.beginTransaction();
@@ -1018,18 +1055,18 @@ async function insertOrderWithDetails(order_id, business_id, product_name, quant
             await connection.query(sqlUpdateProduct, [newQuantity, product_id]);
         } else {
             const sqlInsertProduct = `
-                INSERT INTO PRODUCTS (BUSINESS_ID, PRODUCT_NAME, PRODUCT_DESCRIPTION, QUANTITY, PRICE)
-                VALUES (?, ?, ?, ?, ?);
+                INSERT INTO PRODUCTS (BUSINESS_ID, PRODUCT_NAME, CATEGORY_NAME, PRODUCT_DESCRIPTION, QUANTITY, PRICE)
+                VALUES (?, ?, ?, ?, ?, ?);
             `;
-            const [insertResult] = await connection.query(sqlInsertProduct, [business_id, product_name, product_description, quantity, price]);
+            const [insertResult] = await connection.query(sqlInsertProduct, [business_id, product_name, category_name, product_description, quantity, price]);
             product_id = insertResult.insertId;
         }
 
         const sqlOrder = `
-            INSERT INTO ORDERS (ORDER_ID, BUSINESS_ID, PRODUCT_ID, QUANTITY)
+            INSERT INTO ORDERS (ORDER_ID, BUSINESS_ID, PRODUCT_NAME, QUANTITY)
             VALUES (?, ?, ?, ?);
         `;
-        await connection.query(sqlOrder, [order_id, business_id, product_id, quantity]);
+        await connection.query(sqlOrder, [order_id, business_id, product_name, quantity]);
 
         await connection.commit();
         return { order_line_id: product_id, order_id: order_id, inserted: true };

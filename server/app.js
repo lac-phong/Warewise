@@ -36,8 +36,6 @@ import {
     getSuppliersCategories, 
     getSuppliersByCategory, 
     getSuppliers,  
-    getSupplier, 
-    updateSupplier, 
     deleteSupplier,
 
     insertCustomer,
@@ -54,7 +52,6 @@ import {
 
     insertBalance,
     getBalanceByBusiness,
-    updateBalance,
     deleteBalance,
 
     insertProduct,
@@ -62,7 +59,8 @@ import {
     getProductsByBusiness,
     getProductByBusiness,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getSupplierByOrder
 } from './database.js'
 
 dotenv.config();
@@ -315,7 +313,7 @@ app.get('/orders/:order_id', async (req, res) => {
 });
 
 // EXTERNAL: get all orders for a business
-app.get('/orders/:business_id', async (req, res) => {
+app.get('/orders', async (req, res) => {
     const {token} = req.cookies;
     if (token) {
         jwt.verify(token, jwtSecret, {}, async (err, userData) => {
@@ -535,6 +533,23 @@ app.get('/supplier/:supplier_id', async (req, res) => {
             if (err) throw err;
             const result = await getSupplierInfo(supplier_id, userData.business_id);
             console.log('Supplier:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
+    }
+});
+
+// EXTERNAL: get supplier ID from business id and order id
+app.get('/supplier/:order_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { order_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getSupplierByOrder(userData.business_id, order_id);
+            console.log('Supplier ID:', result);
             res.json(result);
         });
     } else {
@@ -785,24 +800,6 @@ app.get('/balance', async (req, res) => {
             if (err) throw err;
             const result = await getBalanceByBusiness(userData.business_id);
             console.log('Balance records:', result);
-            res.json(result);
-        });
-    } else {
-        res.json(null);
-    }
-});
-
-// EXTERNAL: update a specific balance record
-app.put('/balance/:balance_id', async (req, res) => {
-    const {token} = req.cookies;
-    const { balance_id } = req.params;
-    const { new_balance } = req.body;
-    if (token) {
-        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
-            console.log('Retrieved userData:', userData);
-            if (err) throw err;
-            const result = await updateBalance(balance_id, userData.business_id, new_balance);
-            console.log('Updated balance:', result);
             res.json(result);
         });
     } else {

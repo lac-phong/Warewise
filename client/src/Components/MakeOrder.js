@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Axios from 'axios';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -19,17 +19,35 @@ import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 
 export default function MakeOrder() {
+    const [user, setUser] = useState([])
     const [open, setOpen] = React.useState(false);
-    const [products, setProducts] = useState([{ product: '', quantity: '' }]);
-    const [businessId, setBusinessId] = useState();
-    const [supplierId, setSupplierId] = useState();
-    const [productId, setProductId] = useState();
-    const [quantity, setQuantity] = useState();
-    const [price, setPrice] = useState();
+    const [suppliers, setSuppliers] = useState([])
+    const [products, setProducts] = useState([{ product: '', category: '', description: '',  quantity: '', price: '' }]);
+    const [supplier, setSupplier] = useState();
+
+    useEffect(() => {
+        Axios.get(`http://localhost:8080/business`, {withCredentials: true}).then(({data}) => {
+          setUser(data);
+        });
+      }, []);
+
+    const fetchSuppliers = async () => {
+        try {
+            const response = await Axios.get('http://localhost:8080/suppliers', { withCredentials: true })
+            setSuppliers(response.data)
+        } catch (error) {
+            console.log('Error fetching supplier data:',error)
+        }
+    }
 
     const handleAddProduct = () => {
-        setProducts([...products, { product: '', quantity: '' }]);
+        setProducts([...products, { product: '', category: '', description: '',  quantity: '', price: '' }]);
     };
+
+    const handleSupplierSelect = (e) => {
+        const selectedSupplierId = e.target.value;
+        setSupplier(selectedSupplierId);
+      };
 
     const handleRemoveProduct = (index) => {
         const updatedProducts = [...products];
@@ -49,6 +67,24 @@ export default function MakeOrder() {
         setProducts(updatedProducts);
     };
 
+    const handleCategoryChange = (index, event) => {
+        const updatedProducts = [...products];
+        updatedProducts[index].category = event.target.value;
+        setProducts(updatedProducts);
+    };
+
+    const handleDescriptionChange = (index, event) => {
+        const updatedProducts = [...products];
+        updatedProducts[index].description = event.target.value;
+        setProducts(updatedProducts);
+    };
+
+    const handlePriceChange = (index, event) => {
+        const updatedProducts = [...products];
+        updatedProducts[index].price = event.target.value;
+        setProducts(updatedProducts);
+    };
+
     const handleClickOpen = () => {
         setOpen(true);
     };
@@ -61,8 +97,8 @@ export default function MakeOrder() {
 
     const handleOrder = (e) => {
         e.preventDefault();
-        Axios.post('http://localhost:8080/orders/:business_id/:supplier_id/:product_id/:quantity/:price', {
-          business_id: businessId, supplier_id: supplierId, product_id: productId, quantity: quantity, price: price 
+        Axios.post('http://localhost:8080/allOrders', {
+          business_id: user.BUSINESS_ID, supplier_id: supplier, products: products
         }).then((response) => {
           console.log(response);
         })
@@ -79,46 +115,69 @@ export default function MakeOrder() {
                         <div>
                             <FormControl sx={{ m: 1, minWidth: 120 }}>
                                 <InputLabel htmlFor="grouped-select">Supplier</InputLabel>
-                                <Select defaultValue="" id="grouped-select" label="Grouping">
-                                    <MenuItem value="">
-                                        <em>None</em>
-                                    </MenuItem>
-                                    <ListSubheader>Category 1</ListSubheader>
-                                    <MenuItem value={1}>Option 1</MenuItem>
-                                    <MenuItem value={2}>Option 2</MenuItem>
-                                    <ListSubheader>Category 2</ListSubheader>
-                                    <MenuItem value={3}>Option 3</MenuItem>
-                                    <MenuItem value={4}>Option 4</MenuItem>
+                                <Select
+                                    defaultValue=""
+                                    id="grouped-select"
+                                    label="Grouping"
+                                    value={supplier} // Set the value of the Select component to the supplier state
+                                    onChange={(e) => handleSupplierSelect(e)}
+                                >
+                                    {suppliers.map((supplier) => (
+                                        <MenuItem key={supplier.id} value={supplier.id}>{supplier.SUPPLIER_NAME}</MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </div>
                         <div>
                             {products.map((product, index) => (
-                                <div key={index} style={{ display: 'flex', alignItems: 'center' }}>
+                                <div key={index}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
                                     <TextField
-                                        sx={{ m: 1, width: 100, maxWidth: '100%' }}
-                                        label="Product"
-                                        value={product.quantity}
-                                        onChange={(e) => handleProductChange(index, e)}
-                                        id={`product-select-${index}`}
-                                    />
-                                    <TextField
-                                        sx={{ m: 1, width: 100, maxWidth: '100%' }}
-                                        label="Quantity"
-                                        value={product.quantity}
-                                        onChange={(e) => handleQuantityChange(index, e)}
-                                        id={`quantity-${index}`}
+                                    sx={{ m: 1, width: 200, maxWidth: '100%' }}
+                                    label="Product"
+                                    value={product.name}
+                                    onChange={(e) => handleProductChange(index, e)}
+                                    id={`product-name-${index}`}
                                     />
                                     <Stack sx={{ m: 1, minWidth: 120 }} direction="row" spacing={2}>
-                                        <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddProduct}>
-                                            Add
+                                    <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddProduct}>
+                                        Add
+                                    </Button>
+                                    {products.length > 1 && (
+                                        <Button variant="outlined" startIcon={<DeleteIcon />} onClick={() => handleRemoveProduct(index)}>
+                                        Remove
                                         </Button>
-                                        {products.length > 1 && (
-                                            <Button variant="outlined" startIcon={<DeleteIcon />} onClick={() => handleRemoveProduct(index)}>
-                                                Remove
-                                            </Button>
-                                        )}
+                                    )}
                                     </Stack>
+                                </div>
+                                <TextField
+                                    sx={{ m: 1, width: 200, maxWidth: '100%' }}
+                                    label="Category"
+                                    value={product.category}
+                                    onChange={(e) => handleCategoryChange(index, e)}
+                                    id={`product-category-${index}`}
+                                />
+                                <TextField
+                                    sx={{ m: 1, width: 200, maxWidth: '100%' }}
+                                    label="Description"
+                                    value={product.description}
+                                    onChange={(e) => handleDescriptionChange(index, e)}
+                                    id={`product-description-${index}`}
+                                />
+                                <TextField
+                                    sx={{ m: 1, width: 200, maxWidth: '100%' }}
+                                    label="Quantity"
+                                    value={product.quantity}
+                                    onChange={(e) => handleQuantityChange(index, e)}
+                                    id={`quantity-${index}`}
+                                />
+                                <TextField
+                                    sx={{ m: 1, width: 200, maxWidth: '100%' }}
+                                    label="Price"
+                                    value={product.price}
+                                    onChange={(e) => handlePriceChange(index, e)}
+                                    id={`price-${index}`}
+                                />
                                 </div>
                             ))}
                         </div>
