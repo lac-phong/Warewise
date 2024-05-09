@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import Axios from 'axios';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -17,16 +17,17 @@ import ListSubheader from '@mui/material/ListSubheader';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
+import { UserContext } from '../UserContext.js';
 
 export default function AddEmployee() {
     const [open, setOpen] = React.useState(false);
-    const business_id = 1;
     const [firstName, setFirstName] = useState();
     const [lastName, setLastName] = useState();
     const [email, setEmail] = useState();
     const [phone, setPhone] = useState();
     const [address, setAddress] = useState();
     const [salary, setSalary] = useState();
+    const { businessId } = useContext(UserContext);
 
     const handleClickOpen = () => {
         setOpen(true);
@@ -40,10 +41,11 @@ export default function AddEmployee() {
 
     const handleAddEmployee = (e) => {
         e.preventDefault()
-        Axios.post('http://localhost:8080/employee', {
-            business_id: business_id, first_name: firstName, last_name: lastName, email: email, phone: phone, address: address, salary: salary
-        }).then((response) => {
+        Axios.post(`http://localhost:8080/employee`, {
+            business_id: businessId, first_name: firstName, last_name: lastName, email: email, phone: phone, address: address, salary: salary
+        }, {withCredentials: true}).then((response) => {
           console.log(response);
+          handleClose();
         })
     }
 

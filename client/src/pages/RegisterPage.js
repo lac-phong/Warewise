@@ -8,12 +8,13 @@ function RegisterPage() {
     const [businessNameReg, setBusinessNameReg] = useState('')
     const [usernameReg, setUsernameReg] = useState('')
     const [passwordReg, setPasswordReg] = useState('')
+    const [addressReg, setAddressReg] = useState('')
     const [redirect, setRedirect] = useState(false)
 
     const register = (e) => {
         e.preventDefault()
         Axios.post('http://localhost:8080/register', {
-          username: usernameReg, password: passwordReg, business_name: businessNameReg
+          username: usernameReg, password: passwordReg, business_name: businessNameReg, address: addressReg
         }).then((response) => {
           console.log(response);
           setRedirect(true);
@@ -41,6 +42,13 @@ function RegisterPage() {
             placeholder={'Username'}
             value={usernameReg}
             onChange={(e) => setUsernameReg(e.target.value)}
+            className="w-full px-4 py-2 mb-4 rounded-full border border-gray-300"
+          />
+          <input 
+          type="text"
+            placeholder={'Address'}
+            value={addressReg}
+            onChange={(e) => setAddressReg(e.target.value)}
             className="w-full px-4 py-2 mb-4 rounded-full border border-gray-300"
           />
           <input 
