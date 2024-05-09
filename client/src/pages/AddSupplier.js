@@ -9,6 +9,20 @@ function AddSupplier() {
   const [address, setAddress] = useState('');
 
   const addSupplier = () => {
+    const errors = [];
+    if (!supplierName || !category || !phone || !email || !address) {
+      errors.push('Please fill in all fields.');
+  }
+  else {
+      const phoneRegex = /^\d{10}$/; 
+      if (!phoneRegex.test(phone)) {
+          errors.push('Please enter a valid 10-digit phone number.');
+      }
+  }
+  if (errors.length > 0) {
+      alert(errors.join('\n'));
+      return;
+  }
     Axios.post('http://localhost:8080/suppliers', {
       supplier_name: supplierName,
       email: email,
