@@ -8,6 +8,7 @@ import Layout from './components/Layout.js';
 import AddSupplier from './pages/AddSupplier.js';
 import Inventory from './pages/Inventory.js';
 import Order from './pages/OrderPage.js';
+import Transaction from './pages/TransactionPage.js';
 import { UserContextProvider } from './UserContext';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
             <Route path="/addSupplier" element={<AddSupplier />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/order" element={<Order />} />
+            <Route path="/transaction" element={<Transaction />} />
           </Route>
         </Routes>
       </UserContextProvider>
