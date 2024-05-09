@@ -1,10 +1,120 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
+import Axios from 'axios';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
 function Inventory() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('');
+
+  useEffect(() => {
+    Axios.get('http://localhost:8080/business', { withCredentials: true })
+      .then(({ data }) => {
+        const businessId = data.BUSINESS_ID;
+        Axios.get(`http://localhost:8080/products/${businessId}`)
+          .then(({ data: productsData }) => {
+            const processedProducts = productsData.map((product) => ({
+              ...product,
+              QUANTITY: parseInt(product.QUANTITY, 10),
+              REORDER_LEVEL: parseInt(product.REORDER_LEVEL, 10),
+              REORDER_QUANTITY: parseInt(product.REORDER_QUANTITY, 10),
+              PRICE: parseFloat(product.PRICE),
+            }));
+            setProducts(processedProducts);
+            setLoading(false);
+          })
+          .catch((error) => {
+            console.error('Error fetching products:', error);
+            setLoading(false);
+          });
+      })
+      .catch((error) => {
+        console.error('Error fetching business ID:', error);
+        setLoading(false);
+      });
+  }, []);
+
+  const handleCategoryChange = (event) => {
+    setSelectedCategory(event.target.value);
+  };
+
+  const filteredProducts = selectedCategory
+    ? products.filter((product) => product.CATEGORY_NAME === selectedCategory)
+    : products;
+
   return (
-    <div>Inventory</div>
+    <div className="mx-4 font mt-12 h-screen">
+      <div className="mb-8 text-center">
+        <h1 className="text-5xl">Inventory</h1>
+      </div>
+
+      <div className="text-left m-4">
+        <div className="mb-4">
+          <FormControl sx={{ m: 1, minWidth: 200 }}>
+            <InputLabel htmlFor="category-select">Select Category</InputLabel>
+            <Select
+              value={selectedCategory}
+              onChange={handleCategoryChange}
+              fullWidth
+              label="Select Category"
+              inputProps={{
+                name: 'category',
+                id: 'category-select',
+              }}
+            >
+              <MenuItem value="">All Categories (N/A)</MenuItem>
+              <MenuItem value="Electronics">Electronics</MenuItem>
+              <MenuItem value="Accessories">Accessories</MenuItem>
+              <MenuItem value="Clothing">Clothing</MenuItem>
+            </Select>
+          </FormControl>
+        </div>
+
+        {loading ? (
+          <div>Loading...</div>
+        ) : (
+          <div>
+            {/* Render unique category headings */}
+            {Array.from(new Set(products.map((product) => product.CATEGORY_NAME))).map((categoryName) => (
+              <div key={categoryName} className="m-4">
+                {(!selectedCategory || categoryName === selectedCategory) && (
+                  <>
+                    <h2 className="text-4xl underline mb-4">{categoryName}</h2>
+                    <div className="grid grid-cols-7 gap-4">
+                      <div className="font-bold">Product Name</div>
+                      <div className="font-bold">Product ID</div>
+                      <div className="font-bold">Product Description</div>
+                      <div className="font-bold">Quantity</div>
+                      <div className="font-bold">Reorder Level</div>
+                      <div className="font-bold">Reorder Quantity</div>
+                      <div className="font-bold">Price</div>
+                      {/* Render products for the current category */}
+                      {filteredProducts
+                        .filter((product) => product.CATEGORY_NAME === categoryName)
+                        .map((product) => (
+                          <React.Fragment key={product.PRODUCT_ID}>
+                            <div>{product.PRODUCT_NAME}</div>
+                            <div>{product.PRODUCT_ID}</div>
+                            <div>{product.PRODUCT_DESCRIPTION}</div>
+                            <div>{typeof product.QUANTITY === 'number' ? product.QUANTITY : '-'}</div>
+                            <div>{typeof product.REORDER_LEVEL === 'number' ? product.REORDER_LEVEL : '-'}</div>
+                            <div>{typeof product.REORDER_QUANTITY === 'number' ? product.REORDER_QUANTITY : '-'}</div>
+                            <div>{typeof product.PRICE === 'number' ? `$${product.PRICE.toFixed(2)}` : '-'}</div>
+                          </React.Fragment>
+                        ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
 export default Inventory;
-
