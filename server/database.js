@@ -773,9 +773,13 @@ export async function insertSale(business_id, product_id, quantity, payment_deta
             throw new Error('Product does not exist.');
         }
 
-        // Insert the sale; triggers will handle quantity and balance updates
         const [result] = await pool.query(sql, [business_id, product_id, quantity, payment_details]);
-        return { sale_id: result.insertId, inserted: true };
+        if (result.insertId) {
+            const saleDetails = await getSaleByBusiness(result.insertId, business_id);
+            return {sale_id: result.insertId, sale_price: saleDetails.PRICE, inserted: true};
+        } else {
+            throw new Error('Insert failed, no rows affected');
+        }
     } catch (error) {
         throw new Error('Failed to insert sale: ' + error.message);
     }
@@ -800,40 +804,40 @@ export async function getSalesByBusiness(business_id) {
     }
 }
 
-export async function getSaleByBusiness(sale_id, business_id) {
+export async function getSaleByBusiness(sales_id, business_id) {
     const sql = `
         SELECT * FROM SALES 
-        WHERE SALE_ID = ? AND BUSINESS_ID = ?;
+        WHERE SALES_ID = ? AND BUSINESS_ID = ?;
     `;
     try {
         // Check if the sale exists for the business
-        const checkSale = await checkSaleExists(sale_id, business_id);
+        const checkSale = await checkSaleExists(sales_id, business_id);
         if (!checkSale) {
             throw new Error('Sale does not exist for this business.');
         }
 
-        const [rows] = await pool.query(sql, [sale_id, business_id]);
+        const [rows] = await pool.query(sql, [sales_id, business_id]);
         return rows[0];
     } catch (error) {
         throw new Error('Failed to retrieve sale: ' + error.message);
     }
 }
 
-export async function updateSale(sale_id, business_id, updates) {
+export async function updateSale(sales_id, business_id, updates) {
     const { product_id, quantity, order_date, payment_details, price } = updates;
     const sql = `
         UPDATE SALES
         SET PRODUCT_ID = ?, QUANTITY = ?, ORDER_DATE = ?, PAYMENT_DETAILS = ?, PRICE = ?
-        WHERE SALE_ID = ? AND BUSINESS_ID = ?;
+        WHERE SALES_ID = ? AND BUSINESS_ID = ?;
     `;
     try {
         // Check if the sale exists for the business
-        const checkSale = await checkSaleExists(sale_id, business_id);
+        const checkSale = await checkSaleExists(sales_id, business_id);
         if (!checkSale) {
             throw new Error('Sale does not exist for this business.');
         }
 
-        const [result] = await pool.query(sql, [product_id, quantity, order_date, payment_details, price, sale_id, business_id]);
+        const [result] = await pool.query(sql, [product_id, quantity, order_date, payment_details, price, sales_id, business_id]);
         if (result.affectedRows) {
             return { updated: true };
         } else {
@@ -844,19 +848,19 @@ export async function updateSale(sale_id, business_id, updates) {
     }
 }
 
-export async function deleteSale(sale_id, business_id) {
+export async function deleteSale(sales_id, business_id) {
     const sql = `
         DELETE FROM SALES 
-        WHERE SALE_ID = ? AND BUSINESS_ID = ?;
+        WHERE SALES_ID = ? AND BUSINESS_ID = ?;
     `;
     try {
         // Check if the sale exists for the business
-        const checkSale = await checkSaleExists(sale_id, business_id);
+        const checkSale = await checkSaleExists(sales_id, business_id);
         if (!checkSale) {
             throw new Error('Sale does not exist for this business.');
         }
 
-        const [result] = await pool.query(sql, [sale_id, business_id]);
+        const [result] = await pool.query(sql, [sales_id, business_id]);
         if (result.affectedRows) {
             return { deleted: true };
         } else {
@@ -867,13 +871,13 @@ export async function deleteSale(sale_id, business_id) {
     }
 }
 
-async function checkSaleExists(sale_id, business_id) {
+async function checkSaleExists(sales_id, business_id) {
     const sql = `
         SELECT 1 FROM SALES 
-        WHERE SALE_ID = ? AND BUSINESS_ID = ?;
+        WHERE SALES_ID = ? AND BUSINESS_ID = ?;
     `;
     try {
-        const [rows] = await pool.query(sql, [sale_id, business_id]);
+        const [rows] = await pool.query(sql, [sales_id, business_id]);
         return rows.length > 0;
     } catch (error) {
         throw new Error('Database operation failed: ' + error.message);
@@ -1022,7 +1026,13 @@ export async function insertMultipleProductOrder(business_id, supplier_id, produ
         await connection.query(sqlJunction, [business_id, newOrderId, supplier_id]);
 
         await connection.commit();
-        return { order_id: newOrderId, inserted: true, products: products.length };
+        
+        if (newOrderId) {
+            const orderDetails = await getOrderById(business_id, newOrderId);
+            return {order_id: newOrderId, order_price: orderDetails.PRICE, inserted: true};
+        } else {
+            throw new Error('Insert failed, no rows affected');
+        }
     } catch (error) {
         await connection.rollback();
         throw new Error('Failed to insert order: ' + error.message);

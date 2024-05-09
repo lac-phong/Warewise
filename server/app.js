@@ -302,6 +302,17 @@ app.post('/allOrders', async (req, res) => {
     }
 });
 
+// INTERNAL: insert multiple products in the same order (TEST)
+app.post('/allOrdersTest', async (req, res) => {
+    const { business_id, supplier_id, products } = req.body;
+    try {
+        const result = await insertMultipleProductOrder(business_id, supplier_id, products);
+        res.status(201).json(result);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // EXTERNAL: get an order by its ID
 app.get('/orders/:order_id', async (req, res) => {
     const {token} = req.cookies;
@@ -706,6 +717,18 @@ app.post('/sales', async (req, res) => {
         });
     } else {
         res.json(null);
+    }
+});
+
+// INTERNAL: insert a new sale (TEST)
+app.post('/salesTest/:business_id', async (req, res) => {
+    const { business_id } = req.params;
+    const { product_id, quantity, payment_details } = req.body;
+    try {
+        const result = await insertSale(business_id, product_id, quantity, payment_details);
+        res.status(201).send(result);
+    } catch (error) {
+        res.status(500).send({ error: error.message });
     }
 });
 
