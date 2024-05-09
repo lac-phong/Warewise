@@ -108,7 +108,11 @@ app.post('/login', async (req, res) => {
             return res.status(422).json('Password incorrect');
         }
         const tokenPayload = {
-            business_id: userInfo.BUSINESS_ID
+            business_id: userInfo.BUSINESS_ID,
+            username: userInfo.USERNAME,
+            business_name: userInfo.BUSINESS_NAME,
+            address: userInfo.ADDRESS,
+            creation_date: userInfo.CREATION_DATE
         };
 
         jwt.sign(tokenPayload, jwtSecret, {}, (err, token) => {
@@ -202,9 +206,10 @@ app.get("/employees", async (req, res) => {
     const {token} = req.cookies
     if (token) {
         jwt.verify(token, jwtSecret, {}, async (err, userData) => {
-            console.log('Retrieved userData:', userData)
+            console.log('Retrieved userData from employee:', userData)
             if (err) throw err
             const employees = await getEmployeesByBusiness(userData.business_id);
+            console.log(employees)
             res.json(employees)
         })
     } else {

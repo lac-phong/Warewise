@@ -1,7 +1,7 @@
 import Axios from 'axios';
 import React from 'react'
 import { useState, useEffect } from 'react'
-import { Navigate } from 'react-router-dom';
+import { Navigate} from 'react-router-dom';
 
 function AccountPage() {
   const [user, setUser] = useState(null);
