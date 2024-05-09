@@ -8,7 +8,7 @@ function AccountPage() {
   const [redirect, setRedirect] = useState(false);
 
   useEffect(() => {
-    Axios.get(`http://localhost:8080/business`, {withCredentials: true}).then(({data}) => {
+    Axios.get(`http://localhost:8080/getaccountpage`, {withCredentials: true}).then(({data}) => {
       setUser(data);
     });
   }, []);
@@ -37,6 +37,8 @@ function AccountPage() {
         <p className="mt-4 text-xl">Business ID: {user.BUSINESS_ID}</p>
         <p className="mt-4 text-xl">Username: {user.USERNAME}</p>
         <p className="mt-4 text-xl">Business Name: {user.BUSINESS_NAME}</p>
+        <p className="mt-4 text-xl">Address: {user.ADDRESS}</p>
+        <p className="mt-4 text-xl">Balance: {user.BALANCE}</p>
         <p className="mt-4 text-xl">Creation Date: {user.CREATION_DATE.split('T')[0]}</p>
       </div>
       <div className="flex justify-center">
