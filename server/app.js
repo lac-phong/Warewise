@@ -443,7 +443,7 @@ app.get('/suppliers/:business_id', async (req, res) => {
     }
 });
 
-// EXTERNAL: get detailed information about a specific supplier
+// EXTERNAL: get ALL detailed information about a specific supplier
 app.get('/supplier/:business_id/:supplier_id', async (req, res) => {
     try {
         const { business_id, supplier_id } = req.params;

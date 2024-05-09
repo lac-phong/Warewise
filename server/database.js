@@ -390,7 +390,7 @@ export async function deleteProduct(product_id, business_id) {
     }
 }
 
-async function checkProductExists(business_id, product_id) {
+async function checkProductExists(product_id, business_id) {
     const sql = `
         SELECT 1 FROM PRODUCTS 
         WHERE PRODUCT_ID = ? AND BUSINESS_ID = ?;
