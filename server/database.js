@@ -94,8 +94,15 @@ export async function insertBusiness(username, password, business_name, address)
     `;
     try {
         const [result] = await pool.query(sql, [username, password, business_name, address]);
-        if (result.affectedRows) {
-            return { username, password, business_name, inserted: true };
+        if (result.affectedRows && result.insertId) {
+            const business_id = result.insertId;
+            // Initialize balance to 0
+            const balanceResult = await insertBalance(business_id, 0);
+            if (balanceResult.inserted) {
+                return { username, password, business_name, inserted: true, balanceInitialized: true };
+            } else {
+                throw new Error('Failed to initialize balance');
+            }
         } else {
             throw new Error('Insert failed, no rows affected');
         }
@@ -878,7 +885,11 @@ export async function insertBalance(business_id, balance) {
         }
 
         const [result] = await pool.query(sql, [business_id, balance]);
-        return { balance_id: result.insertId, inserted: true };
+        if (result.affectedRows) {
+            return { balance_id: result.insertId, inserted: true };
+        } else {
+            throw new Error('Insert failed, no rows affected');
+        }
     } catch (error) {
         throw new Error('Failed to insert balance: ' + error.message);
     }
@@ -903,20 +914,32 @@ export async function getBalanceByBusiness(business_id) {
     }
 }
 
-export async function updateBalance(balance_id, business_id, new_balance) {
+export async function addBalance(business_id, new_balance) {
     const sql = `
         UPDATE BALANCE
-        SET BALANCE = ?
-        WHERE BALANCE_ID = ? AND BUSINESS_ID = ?;
+        SET BALANCE = BALANCE + ?
+        WHERE BUSINESS_ID = ?;
     `;
     try {
-        // Check if the balance exists for the business
-        const checkBalance = await checkBalanceExists(balance_id, business_id);
-        if (!checkBalance) {
-            throw new Error('Balance record does not exist for this business.');
+        const [result] = await pool.query(sql, [new_balance, business_id]);
+        if (result.affectedRows) {
+            return { updated: true };
+        } else {
+            throw new Error('No balance record found for update');
         }
+    } catch (error) {
+        throw new Error('Failed to update balance: ' + error.message);
+    }
+}
 
-        const [result] = await pool.query(sql, [new_balance, balance_id, business_id]);
+export async function subtractBalance(business_id, new_balance) {
+    const sql = `
+        UPDATE BALANCE
+        SET BALANCE = BALANCE - ?
+        WHERE BUSINESS_ID = ?;
+    `;
+    try {
+        const [result] = await pool.query(sql, [new_balance, business_id]);
         if (result.affectedRows) {
             return { updated: true };
         } else {
@@ -977,12 +1000,13 @@ export async function insertMultipleProductOrder(business_id, supplier_id, produ
 
         for (let product of products) {
             await insertOrderWithDetails(newOrderId, business_id, product.product_name, product.quantity, product.price, product.product_description);
-            const sqlJunction = `
-                INSERT INTO BUSINESS_ORDERS_SUPPLIERS (BUSINESS_ID, ORDER_ID, SUPPLIER_ID)
-                VALUES (?, ?, ?);
-            `;
-            await connection.query(sqlJunction, [business_id, newOrderId, supplier_id]);
         }
+
+        const sqlJunction = `
+            INSERT INTO BUSINESS_ORDERS_SUPPLIERS (BUSINESS_ID, ORDER_ID, SUPPLIER_ID)
+            VALUES (?, ?, ?);
+        `;
+        await connection.query(sqlJunction, [business_id, newOrderId, supplier_id]);
 
         await connection.commit();
         return { order_id: newOrderId, inserted: true, products: products.length };
@@ -1026,10 +1050,10 @@ async function insertOrderWithDetails(order_id, business_id, product_name, quant
         }
 
         const sqlOrder = `
-            INSERT INTO ORDERS (ORDER_ID, BUSINESS_ID, PRODUCT_ID, QUANTITY)
+            INSERT INTO ORDERS (ORDER_ID, BUSINESS_ID, PRODUCT_NAME, QUANTITY)
             VALUES (?, ?, ?, ?);
         `;
-        await connection.query(sqlOrder, [order_id, business_id, product_id, quantity]);
+        await connection.query(sqlOrder, [order_id, business_id, product_name, quantity]);
 
         await connection.commit();
         return { order_line_id: product_id, order_id: order_id, inserted: true };

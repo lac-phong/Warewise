@@ -54,7 +54,8 @@ import {
 
     insertBalance,
     getBalanceByBusiness,
-    updateBalance,
+    addBalance,
+    subtractBalance,
     deleteBalance,
 
     insertProduct,
@@ -803,6 +804,40 @@ app.put('/balance/:balance_id', async (req, res) => {
             if (err) throw err;
             const result = await updateBalance(balance_id, userData.business_id, new_balance);
             console.log('Updated balance:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
+    }
+});
+
+// EXTERNAL: add from a specific balance record
+app.put('/addbalance', async (req, res) => {
+    const {token} = req.cookies;
+    const { new_balance } = req.body;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await addBalance(userData.business_id, new_balance);
+            console.log('Added balance:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
+    }
+});
+
+// EXTERNAL: subtract from a specific balance record
+app.put('/subtractbalance', async (req, res) => {
+    const {token} = req.cookies;
+    const { new_balance } = req.body;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await subtractBalance(userData.business_id, new_balance);
+            console.log('Added balance:', result);
             res.json(result);
         });
     } else {
