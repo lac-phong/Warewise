@@ -13,7 +13,7 @@ const pool = mysql.createPool({
 
 export async function getAccountPage(business_id) {
     const sql = `
-        SELECT BUS.BUSINESS_ID, BUS.BUSINESS_NAME, BAL.BALANCE
+        SELECT BUS.BUSINESS_ID, BUS.BUSINESS_NAME, BAL.BALANCE, BUS.ADDRESS, BUS.CREATION_DATE, BUS.USERNAME
         FROM BUSINESS BUS
         JOIN BALANCE BAL ON BUS.BUSINESS_ID = BAL.BUSINESS_ID
         WHERE BUS.BUSINESS_ID = ?;
