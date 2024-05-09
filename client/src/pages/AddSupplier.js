@@ -4,12 +4,19 @@ import Axios from 'axios';
 function AddSupplier() {
   const [supplierName, setSupplierName] = useState('');
   const [category, setCategory] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [address, setAddress] = useState('');
 
   const addSupplier = () => {
-    Axios.post('http://localhost:8080/supplier', {
+    Axios.post('http://localhost:8080/suppliers', {
       supplier_name: supplierName,
-      category: category
-    })
+      email: email,
+      phone: phone,
+      address: address,
+      supplier_category: category,
+    }, {withCredentials:true}
+    )
     .then((response) => {
       console.log('Supplier added successfully:', response.data);
       // Handle success, maybe navigate to another screen or show a success message
@@ -30,7 +37,7 @@ function AddSupplier() {
         <h1 className="w-1/8 text-5xl text-center mb-10">Add Supplier</h1>
         <form className="max-w-md mx-auto flex flex-col">
           <div className="flex mb-4 items-center">
-            <label htmlFor="supplierName" className="w-1/8 text-left mr-2 mb-2 px-3">Supplier Name</label>
+            <label htmlFor="supplier_name" className="w-1/8 text-left mr-2 mb-2 px-3">Supplier Name</label>
             <input 
               type="text"
               id="supplierName"
@@ -48,6 +55,37 @@ function AddSupplier() {
               placeholder="Category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
+              className="flex-grow px-5 py-2 mb-2 rounded-full border border-gray-300"
+            />
+            <label htmlFor="phone" className="w-1/8 text-left mr-2 mb-2 px-3">Phone</label>
+            <input 
+              type="text"
+              id="phone"
+              placeholder="Phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="flex-grow px-5 py-2 mb-2 rounded-full border border-gray-300"
+            />
+          </div>
+          <div className="flex mb-4 items-center">
+            <label htmlFor="email" className="w-1/8 text-left mr-11 mb-2 px-3">Email</label>
+            <input 
+              type="text"
+              id="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-grow px-5 py-2 mb-2 rounded-full border border-gray-300"
+            />
+          </div>
+          <div className="flex mb-4 items-center">
+            <label htmlFor="address" className="w-1/8 text-left mr-11 mb-2 px-3">Address</label>
+            <input 
+              type="text"
+              id="address"
+              placeholder="Address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
               className="flex-grow px-5 py-2 mb-2 rounded-full border border-gray-300"
             />
           </div>
