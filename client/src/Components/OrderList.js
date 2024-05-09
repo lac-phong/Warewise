@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Axios from 'axios';
 
-function OrderList(props) {
+function OrderList() {
   const [orders, setOrders] = useState([]);
   const [supplierId, setSupplierId] = useState([])
   const [supplierName, setSupplierName] = useState([])
