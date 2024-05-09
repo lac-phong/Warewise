@@ -126,13 +126,18 @@ app.post('/login', async (req, res) => {
 // ----------------------------------------------------------- ACCOUNT PAGE -----------------------------------------------------------------------//
 
 // EXTERNAL: get account page
-app.get('/getaccountpage/:business_id', async (req, res) => {
-    const { business_id } = req.params;
-    try {
-        const accountPage = await getAccountPage(business_id);
-        res.json(accountPage);
-    } catch (error) {
-        res.status(404).json({ message: error.message });
+app.get('/getaccountpage', async (req, res) => {
+    const {token} = req.cookies;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const accountPage = await getAccountPage(userData.business_id);
+            console.log('accountPage:', accountPage); 
+            res.json(accountPage);
+        });
+    } else {
+        res.json(null);
     }
 });
 
@@ -276,109 +281,161 @@ app.delete("/employee/:employee_id", async (req, res) => {
 
 // EXTERNAL: insert multiple products in the same order
 app.post('/allOrders', async (req, res) => {
-    const { business_id, supplier_id, products } = req.body;
-    try {
-        const result = await insertMultipleProductOrder(business_id, supplier_id, products);
-        res.status(201).json(result);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    const {token} = req.cookies;
+    const { supplier_id, products } = req.body;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await insertMultipleProductOrder(userData.business_id, supplier_id, products);
+            console.log('Inserted Order Info:', result);
+            res.status(201).json(result);
+            
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get an order by its ID
-app.get('/orders/:business_id/:order_id', async (req, res) => {
-    try {
-        const { business_id, order_id } = req.params;
-        const order = await getOrderById(business_id, order_id);
-        res.json(order);
-    } catch (error) {
-        res.status(500).send(error.message);
+app.get('/orders/:order_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { order_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const order = await getOrderById(userData.business_id, order_id);
+            console.log('Order', order)
+            res.json(order);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get all orders for a business
 app.get('/orders/:business_id', async (req, res) => {
-    try {
-        const { business_id } = req.params;
-        const orders = await getOrders(business_id);
-        res.json(orders);
-    } catch (error) {
-        res.status(500).send(error.message);
+    const {token} = req.cookies;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const orders = await getOrders(userData.business_id);
+            console.log('Orders:', orders);
+            res.json(orders);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get order details by order ID
-app.get('/order-details/:business_id/:order_id', async (req, res) => {
-    try {
-        const { business_id, order_id } = req.params;
-        const orderDetails = await getOrderDetailsById(order_id, business_id);
-        res.json(orderDetails);
-    } catch (error) {
-        res.status(500).send(error.message);
+app.get('/order-details/:order_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { order_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const orderDetails = await getOrderDetailsById(order_id, userData.business_id);
+            console.log('Order details:', orders);
+            res.json(orderDetails);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get orders by supplier
-app.get('/orders-by-supplier/:business_id/:supplier_id', async (req, res) => {
-    try {
-        const { business_id, supplier_id } = req.params;
-        const orders = await getOrderBySupplier(business_id, supplier_id);
-        res.json(orders);
-    } catch (error) {
-        res.status(500).send(error.message);
+app.get('/orders-by-supplier/:supplier_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { supplier_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const orders = await getOrderBySupplier(userData.business_id, supplier_id);
+            console.log('Orders:', orders);
+            res.json(orders);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get orders by specific date
-app.get('/orders-by-date/:business_id/:order_date', async (req, res) => {
-    try {
-        const { business_id, order_date } = req.params;
-        const orders = await getOrderByDate(business_id, order_date);
-        res.json(orders);
-    } catch (error) {
-        res.status(500).send(error.message);
+app.get('/orders-by-date/:order_date', async (req, res) => {
+    const {token} = req.cookies;
+    const { order_date } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const orders = await getOrderByDate(userData.business_id, order_date);
+            console.log('Orders:', orders);
+            res.json(orders);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get order details by product name
-app.get('/order-details-by-product/:business_id/:product_name', async (req, res) => {
-    try {
-        const { business_id, product_name } = req.params;
-        const orderDetails = await getOrderDetailsByProduct(business_id, product_name);
-        res.json(orderDetails);
-    } catch (error) {
-        res.status(500).send(error.message);
+app.get('/order-details-by-product/:product_name', async (req, res) => {
+    const {token} = req.cookies;
+    const { product_name } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const orderDetails = await getOrderDetailsByProduct(business_id, product_name);
+            console.log('Order details:', orders);
+            res.json(orderDetails);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: update order details
-app.put('/update-order/:business_id/:order_id', async (req, res) => {
-    try {
-        const { business_id, order_id } = req.params;
-        const updates = req.body;
-        const result = await updateOrderDetails(order_id, business_id, updates);
-        if (result.updated) {
-            res.send('Order updated successfully.');
-        } else {
-            res.status(404).send('Order not found.');
-        }
-    } catch (error) {
-        res.status(500).send(error.message);
+app.put('/update-order/:order_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { order_id } = req.params;
+    const updates = req.body;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await updateOrderDetails(order_id, userData.business_id, updates);
+            if (result.updated) {
+                res.json('Order updated successfully:', result);
+            } else {
+                res.status(404).send('Order not found.');
+            }
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: delete an order
-app.delete('/delete-order/:business_id/:order_id', async (req, res) => {
-    try {
-        const { business_id, order_id } = req.params;
-        const result = await deleteOrder(order_id, business_id);
-        if (result.deleted) {
-            res.send('Order deleted successfully.');
-        } else {
-            res.status(404).send('Order not found.');
-        }
-    } catch (error) {
-        res.status(500).send(error.message);
+app.delete('/delete-order/:order_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { order_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await deleteOrder(order_id, userData.business_id);
+            if (result.deleted) {
+                res.json('Order deleted successfully');
+            } else {
+                res.status(404).send('Order not found.');
+            }
+        });
+    } else {
+        res.json(null);
     }
 });
 
@@ -387,93 +444,136 @@ app.delete('/delete-order/:business_id/:order_id', async (req, res) => {
 // ------------------------------------------------------------ SUPPLIERS -------------------------------------------------------------------------//
 
 // EXTERNAL: insert a new supplier
-app.post('/suppliers/:business_id', async (req, res) => {
-    try {
-        const { business_id } = req.params;
-        const { supplier_name, email, phone, address, supplier_category } = req.body;
-        const result = await insertSupplier(business_id, supplier_name, email, phone, address, supplier_category);
-        res.status(201).send(result);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.post('/suppliers', async (req, res) => {
+    const {token} = req.cookies;
+    const { supplier_name, email, phone, address, supplier_category } = req.body;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await insertSupplier(userData.business_id, supplier_name, email, phone, address, supplier_category);
+            console.log('Inserted supplier:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get information about a specific supplier
-app.get('/suppliers/:business_id/:supplier_id', async (req, res) => {
-    try {
-        const { business_id, supplier_id } = req.params;
-        const result = await getSupplierInfo(business_id, supplier_id);
-        res.send(result);
-    } catch (error) {
-        console.error('Error fetching businesses:', error);
-        res.status(500).send({ error: 'Internal server error' });
+app.get('/suppliers/:supplier_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { supplier_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getSupplierInfo(userData.business_id, supplier_id);
+            console.log('Supplier:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 // EXTERNALl: get all suppliers for a business by categories
-app.get('/suppliers/categories/:business_id', async (req, res) => {
-    try {
-        const { business_id } = req.params;
-        const result = await getSuppliersCategories(business_id);
-        res.send(result);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.get('/suppliers/categories', async (req, res) => {
+    const {token} = req.cookies;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getSuppliersCategories(userData.business_id);
+            console.log('Supplier categories:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get suppliers by category
-app.get('/suppliers/:business_id/category', async (req, res) => {
-    try {
-        const { business_id } = req.params;
-        const { category } = req.query;
-        const result = await getSuppliersByCategory(business_id, category);
-        res.send(result);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.get('/suppliers/category', async (req, res) => {
+    const {token} = req.cookies;
+    const { category } = req.query;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getSuppliersByCategory(userData.business_id, category);
+            console.log('Suppliers:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get all suppliers for a business
-app.get('/suppliers/:business_id', async (req, res) => {
-    try {
-        const { business_id } = req.params;
-        const result = await getSuppliers(business_id);
-        res.send(result);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.get('/suppliers', async (req, res) => {
+    const {token} = req.cookies;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getSuppliers(userData.business_id);
+            console.log('Suppliers:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get ALL detailed information about a specific supplier
-app.get('/supplier/:business_id/:supplier_id', async (req, res) => {
-    try {
-        const { business_id, supplier_id } = req.params;
-        const result = await getSupplier(supplier_id, business_id);
-        res.send(result);
-    } catch (error) {
-        res.status(404).send({ error: error.message });
+app.get('/supplier/:supplier_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { supplier_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getSupplierInfo(supplier_id, userData.business_id);
+            console.log('Supplier:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // Update a supplier
-app.put('/supplier/:business_id/:supplier_id', async (req, res) => {
-    try {
-        const { business_id, supplier_id } = req.params;
-        const updates = req.body;
-        const result = await updateSupplier(supplier_id, business_id, updates);
-        res.send(result);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.put('/supplier/:supplier_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { supplier_id } = req.params;
+    const updates = req.body;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getSupplierInfo(supplier_id, userData.business_id, updates);
+            console.log('Updated supplier:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // Delete a supplier
-app.delete('/supplier/:business_id/:supplier_id', async (req, res) => {
-    try {
-        const { business_id, supplier_id } = req.params;
-        const result = await deleteSupplier(supplier_id, business_id);
-        res.status(204).send(result);
-    } catch (error) {
-        res.status(404).send({ error: error.message });
+app.delete('/supplier/:supplier_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { supplier_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await deleteSupplier(supplier_id, userData.business_id);
+            console.log('Deleted supplier:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
@@ -482,63 +582,87 @@ app.delete('/supplier/:business_id/:supplier_id', async (req, res) => {
 // ------------------------------------------------------------ CUSTOMERS -------------------------------------------------------------------------//
 
 // EXTERNAL: insert a new customer
-app.post('/customers/:business_id', async (req, res) => {
-    const { business_id } = req.params;
+app.post('/customers', async (req, res) => {
+    const {token} = req.cookies;
     const { first_name, last_name, email, phone, address } = req.body;
-    try {
-        const result = await insertCustomer(business_id, first_name, last_name, email, phone, address);
-        res.status(201).send(result);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await insertCustomer(userData.business_id, first_name, last_name, email, phone, address);
+            console.log('Inserted customer:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get all customers for a specific business
-app.get('/customers/:business_id', async (req, res) => {
-    const { business_id } = req.params;
-    try {
-        const customers = await getCustomersByBusiness(business_id);
-        res.send(customers);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.get('/customers', async (req, res) => {
+    const {token} = req.cookies;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getCustomersByBusiness(userData.business_id);
+            console.log('Customers:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get a specific customer by business
-app.get('/customer/:business_id/:customer_id', async (req, res) => {
-    const { business_id, customer_id } = req.params;
-    try {
-        const customer = await getCustomerByBusiness(customer_id, business_id);
-        res.send(customer);
-    } catch (error) {
-        res.status(404).send({ error: error.message });
+app.get('/customer/:customer_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { customer_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getCustomerByBusiness(customer_id, userData.business_id);
+            console.log('Customer:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: update a specific customer
-app.put('/customer/:business_id/:customer_id', async (req, res) => {
-    const { business_id, customer_id } = req.params;
+app.put('/customer/:customer_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { customer_id } = req.params;
     const updates = req.body;
-    try {
-        const result = await updateCustomer(customer_id, business_id, updates);
-        res.send(result);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await updateCustomer(customer_id, userData.business_id, updates);
+            console.log('Updated customer:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: delete a specific customer
-app.delete('/customer/:business_id/:customer_id', async (req, res) => {
-    const { business_id, customer_id } = req.params;
-    try {
-        const result = await deleteCustomer(customer_id, business_id);
-        if (result.deleted) {
-            res.status(204).send({});
-        } else {
-            res.status(404).send({ error: 'No customer found to delete' });
-        }
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.delete('/customer/:customer_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { customer_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await deleteCustomer(customer_id, userData.business_id);
+            console.log('Deleted customer:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
@@ -547,67 +671,87 @@ app.delete('/customer/:business_id/:customer_id', async (req, res) => {
 // ---------------------------------------------------------------- SALES -------------------------------------------------------------------------//
 
 // EXTERNAL: insert a new sale
-app.post('/sales/:business_id', async (req, res) => {
-    const { business_id } = req.params;
+app.post('/sales', async (req, res) => {
+    const {token} = req.cookies;
     const { product_id, quantity, payment_details } = req.body;
-    try {
-        const result = await insertSale(business_id, product_id, quantity, payment_details);
-        res.status(201).send(result);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await insertSale(userData.business_id, product_id, quantity, payment_details);
+            console.log('Inserted sale:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get all sales for a specific business
-app.get('/sales/:business_id', async (req, res) => {
-    const { business_id } = req.params;
-    try {
-        const sales = await getSalesByBusiness(business_id);
-        res.send(sales);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.get('/sales', async (req, res) => {
+    const {token} = req.cookies;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getSalesByBusiness(userData.business_id);
+            console.log('Sales:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get a specific sale by business
-app.get('/sale/:business_id/:sale_id', async (req, res) => {
-    const { business_id, sale_id } = req.params;
-    try {
-        const sale = await getSaleByBusiness(sale_id, business_id);
-        res.send(sale);
-    } catch (error) {
-        res.status(404).send({ error: error.message });
+app.get('/sale/:sale_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { sale_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getSaleByBusiness(sale_id, userData.business_id);
+            console.log('Sale:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: update a specific sale
-app.put('/sale/:business_id/:sale_id', async (req, res) => {
-    const { business_id, sale_id } = req.params;
+app.put('/sale/:sale_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { sale_id } = req.params;
     const updates = req.body;
-    try {
-        const result = await updateSale(sale_id, business_id, updates);
-        if (result.updated) {
-            res.send(result);
-        } else {
-            res.status(404).send({ message: 'No sale found for update' });
-        }
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await updateSale(sale_id, userData.business_id, updates);
+            console.log('Updated sale:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: delete a specific sale
-app.delete('/sale/:business_id/:sale_id', async (req, res) => {
-    const { business_id, sale_id } = req.params;
-    try {
-        const result = await deleteSale(sale_id, business_id);
-        if (result.deleted) {
-            res.status(204).send({});
-        } else {
-            res.status(404).send({ message: 'No sale found to delete' });
-        }
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.delete('/sale/:sale_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { sale_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await deletedBusiness(sale_id, userData.business_id);
+            console.log('Deleted Sale:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
@@ -616,56 +760,70 @@ app.delete('/sale/:business_id/:sale_id', async (req, res) => {
 // -------------------------------------------------------------- BALANCE -------------------------------------------------------------------------//
 
 // EXTERNAL: insert a new balance
-app.post('/balance/:business_id', async (req, res) => {
-    const { business_id } = req.params;
+app.post('/balance', async (req, res) => {
+    const {token} = req.cookies;
     const { balance } = req.body;
-    try {
-        const result = await insertBalance(business_id, balance);
-        res.status(201).send(result);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await insertBalance(userData.business_id, balance);
+            console.log('Inserted Balance:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get balance records for a specific business
-app.get('/balance/:business_id', async (req, res) => {
-    const { business_id } = req.params;
-    try {
-        const balances = await getBalanceByBusiness(business_id);
-        res.send(balances);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.get('/balance', async (req, res) => {
+    const {token} = req.cookies;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getBalanceByBusiness(userData.business_id);
+            console.log('Balance records:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: update a specific balance record
-app.put('/balance/:business_id/:balance_id', async (req, res) => {
-    const { balance_id, business_id } = req.params;
+app.put('/balance/:balance_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { balance_id } = req.params;
     const { new_balance } = req.body;
-    try {
-        const result = await updateBalance(balance_id, business_id, new_balance);
-        if (result.updated) {
-            res.send(result);
-        } else {
-            res.status(404).send({ message: 'No balance record found for update' });
-        }
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await updateBalance(balance_id, userData.business_id, new_balance);
+            console.log('Updated balance:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: delete a specific balance record
-app.delete('/balance/:business_id/:balance_id', async (req, res) => {
-    const { balance_id, business_id } = req.params;
-    try {
-        const result = await deleteBalance(balance_id, business_id);
-        if (result.deleted) {
-            res.status(204).send({});
-        } else {
-            res.status(404).send({ message: 'No balance record found to delete' });
-        }
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.delete('/balance/:balance_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { balance_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await deleteBalance(balance_id, userData.business_id);
+            console.log('Deleted balance:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
@@ -674,78 +832,104 @@ app.delete('/balance/:business_id/:balance_id', async (req, res) => {
 // ------------------------------------------------------------- PRODUCTS -------------------------------------------------------------------------//
 
 // EXTERNAL: insert a new product
-app.post('/products/:business_id', async (req, res) => {
-    const { business_id } = req.params;
+app.post('/products', async (req, res) => {
+    const {token} = req.cookies;
     const { category_name, product_name, product_description, quantity, reorder_level, reorder_quantity, price, supplier_id } = req.body;
-    try {
-        const result = await insertProduct(business_id, category_name, product_name, product_description, quantity, reorder_level, reorder_quantity, price, supplier_id);
-        res.status(201).send(result);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await insertProduct(userData.business_id, category_name, product_name, product_description, quantity, reorder_level, reorder_quantity, price, supplier_id);
+            console.log('Inserted product:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get all products for a specific business
-app.get('/products/:business_id', async (req, res) => {
-    const { business_id } = req.params;
-    try {
-        const products = await getProductsByBusiness(business_id);
-        res.send(products);
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.get('/products', async (req, res) => {
+    const {token} = req.cookies;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getProductsByBusiness(userData.business_id);
+            console.log('Products:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get a specific product by name within a business
-app.get('/products/:business_id/name/:product_name', async (req, res) => {
-    const { business_id, product_name } = req.params;
-    try {
-        const product = await getProductByNameandBusiness(business_id, product_name);
-        res.send(product);
-    } catch (error) {
-        res.status(404).send({ error: error.message });
+app.get('/products/name/:product_name', async (req, res) => {
+    const {token} = req.cookies;
+    const { product_name } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getProductByNameandBusiness(userData.business_id, product_name);
+            console.log('Product:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: get a specific product by ID within a business
-app.get('/product/:business_id/:product_id', async (req, res) => {
-    const { business_id, product_id } = req.params;
-    try {
-        const product = await getProductByBusiness(product_id, business_id);
-        res.send(product);
-    } catch (error) {
-        res.status(404).send({ error: error.message });
+app.get('/product/:product_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { product_id } = req.params;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await getProductByBusiness(product_id, userData.business_id);
+            console.log('Product:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: update a specific product
-app.put('/product/:business_id/:product_id', async (req, res) => {
-    const { business_id, product_id } = req.params;
+app.put('/product/:product_id', async (req, res) => {
+    const {token} = req.cookies;
+    const { product_id } = req.params;
     const updates = req.body;
-    try {
-        const result = await updateProduct(product_id, business_id, updates);
-        if (result.updated) {
-            res.send(result);
-        } else {
-            res.status(404).send({ message: 'No product found for update' });
-        }
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await updateProduct(product_id, userData.business_i, updates);
+            console.log('Updated Product:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
 // EXTERNAL: delete a specific product
-app.delete('/product/:business_id/:product_id', async (req, res) => {
-    const { business_id, product_id } = req.params;
-    try {
-        const result = await deleteProduct(product_id, business_id);
-        if (result.deleted) {
-            res.status(204).send({});
-        } else {
-            res.status(404).send({ message: 'No product found to delete' });
-        }
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+app.delete('/product/:product_id', async (req, res) => {
+    const { product_id } = req.params;
+    const {token} = req.cookies;
+    if (token) {
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            console.log('Retrieved userData:', userData);
+            if (err) throw err;
+            const result = await deleteProduct(product_id, userData.business_id);
+            console.log('Deleted product:', result);
+            res.json(result);
+        });
+    } else {
+        res.json(null);
     }
 });
 
