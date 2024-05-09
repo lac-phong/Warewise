@@ -69,10 +69,16 @@ Once both the server and client are running, access the application by navigatin
 
 # Division of Work
 
-Rohith Iyengar 
-Lac Phong-Nguyen  
-Shreya Raj  
-Natalie Kao  
-Nyun Ei Hlaing
-- Created Log in, Register, Account, and Employee page.
-- Created ER diagram.
+- **Rohith Iyengar**
+  
+- **Lac Phong-Nguyen**
+
+- **Shreya Raj**
+
+- **Natalie Kao**
+  - Created Add Supplier Page
+  - Created presentation slides
+
+- **Nyun Ei Hlaing**
+  - Created Log in, Register, Account, and Employee pages
+  - Created ER diagram.
