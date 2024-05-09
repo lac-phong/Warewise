@@ -1,25 +1,16 @@
-import * as React from 'react';
-import { useState, useContext } from 'react';
-import Axios from 'axios';
-import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/AddCircle';
-import Stack from '@mui/material/Stack';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import ListSubheader from '@mui/material/ListSubheader';
-import FormControl from '@mui/material/FormControl';
-import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
+import Axios from 'axios';
+import * as React from 'react';
+import { useContext, useState } from 'react';
 import { UserContext } from '../UserContext.js';
 
-export default function AddEmployee() {
+export default function AddEmployee({ onAddEmployee }) {
     const [open, setOpen] = React.useState(false);
     const [firstName, setFirstName] = useState();
     const [lastName, setLastName] = useState();
@@ -41,12 +32,39 @@ export default function AddEmployee() {
 
     const handleAddEmployee = (e) => {
         e.preventDefault()
-        Axios.post(`http://localhost:8080/employee`, {
-            business_id: businessId, first_name: firstName, last_name: lastName, email: email, phone: phone, address: address, salary: salary
-        }, {withCredentials: true}).then((response) => {
-          console.log(response);
-          handleClose();
-        })
+        
+        //error handling
+        const errors = [];
+
+        if (!firstName || !lastName || !email || !phone || !address || !salary) {
+            errors.push('Please fill in all fields.');
+        }
+        else {
+            const parsedSalary = parseFloat(salary);
+            if (isNaN(parsedSalary) || parsedSalary < 0) {
+                errors.push('Please enter a valid number for Salary.');
+            }
+            const phoneRegex = /^\d{10}$/; 
+            if (!phoneRegex.test(phone)) {
+                errors.push('Please enter a valid 10-digit phone number.');
+            }
+        }
+        if (errors.length > 0) {
+            alert(errors.join('\n'));
+            return;
+        }
+
+        const employee = {
+            business_id: businessId, 
+            first_name: firstName, 
+            last_name: lastName, 
+            email: email, 
+            phone: phone, 
+            address: address, 
+            salary: parseFloat(salary)
+        }
+        onAddEmployee(employee);
+        handleClose();
     }
 
     return (
