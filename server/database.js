@@ -903,20 +903,14 @@ export async function getBalanceByBusiness(business_id) {
     }
 }
 
-export async function updateBalance(balance_id, business_id, new_balance) {
+export async function updateBalance(business_id, new_balance) {
     const sql = `
         UPDATE BALANCE
         SET BALANCE = ?
-        WHERE BALANCE_ID = ? AND BUSINESS_ID = ?;
+        WHERE BUSINESS_ID = ?;
     `;
     try {
-        // Check if the balance exists for the business
-        const checkBalance = await checkBalanceExists(balance_id, business_id);
-        if (!checkBalance) {
-            throw new Error('Balance record does not exist for this business.');
-        }
-
-        const [result] = await pool.query(sql, [new_balance, balance_id, business_id]);
+        const [result] = await pool.query(sql, [new_balance, business_id]);
         if (result.affectedRows) {
             return { updated: true };
         } else {
