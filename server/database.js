@@ -552,6 +552,19 @@ export async function getSupplier(supplier_id, business_id) {
     }
 }
 
+export async function getSupplierByOrder(business_id, order_id) {
+    const sql = `
+        SELECT SUPPLIER_ID FROM BUSINESS_ORDERS_SUPPLIERS
+        WHERE BUSINESS_ID = ? AND ORDER_ID = ?;
+    `;
+    try {
+        const [rows] = await pool.query(sql, [business_id, order_id]);
+        return rows[0];
+    } catch (error) {
+        throw new Error('Failed to retrieve supplier: ' + error.message);
+    }
+}
+
 export async function updateSupplier (supplier_id, business_id, updates) {
     const { supplier_name, email, phone, address, supplier_category } = updates;
     const sql = `
@@ -999,7 +1012,7 @@ export async function insertMultipleProductOrder(business_id, supplier_id, produ
         const newOrderId = lastOrder[0].last_order_id ? lastOrder[0].last_order_id + 1 : 1;
 
         for (let product of products) {
-            await insertOrderWithDetails(newOrderId, business_id, product.product_name, product.quantity, product.price, product.product_description);
+            await insertOrderWithDetails(newOrderId, business_id, product.product_name, product.category_name, product.quantity, product.price, product.product_description);
         }
 
         const sqlJunction = `
@@ -1018,7 +1031,7 @@ export async function insertMultipleProductOrder(business_id, supplier_id, produ
     }
 }
 
-async function insertOrderWithDetails(order_id, business_id, product_name, quantity, price, product_description) {
+async function insertOrderWithDetails(order_id, business_id, product_name, category_name, quantity, price, product_description) {
     const connection = await pool.getConnection();
     try {
         await connection.beginTransaction();
@@ -1042,10 +1055,10 @@ async function insertOrderWithDetails(order_id, business_id, product_name, quant
             await connection.query(sqlUpdateProduct, [newQuantity, product_id]);
         } else {
             const sqlInsertProduct = `
-                INSERT INTO PRODUCTS (BUSINESS_ID, PRODUCT_NAME, PRODUCT_DESCRIPTION, QUANTITY, PRICE)
-                VALUES (?, ?, ?, ?, ?);
+                INSERT INTO PRODUCTS (BUSINESS_ID, PRODUCT_NAME, CATEGORY_NAME, PRODUCT_DESCRIPTION, QUANTITY, PRICE)
+                VALUES (?, ?, ?, ?, ?, ?);
             `;
-            const [insertResult] = await connection.query(sqlInsertProduct, [business_id, product_name, product_description, quantity, price]);
+            const [insertResult] = await connection.query(sqlInsertProduct, [business_id, product_name, category_name, product_description, quantity, price]);
             product_id = insertResult.insertId;
         }
 
