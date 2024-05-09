@@ -1,7 +1,7 @@
 import React from 'react'
 import TextField from "@mui/material/TextField";
-import OrderList from "../Components/OrderList"
-import MakeOrder from '../Components/MakeOrder';
+import OrderList from "../components/OrderList"
+import MakeOrder from '../components/MakeOrder';
 import "../Styling/OrderPage.css";
 
 function OrderPage() {
