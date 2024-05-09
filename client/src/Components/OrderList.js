@@ -4,6 +4,7 @@ import Axios from 'axios';
 function OrderList(props) {
   const [orders, setOrders] = useState([]);
   const [supplierId, setSupplierId] = useState([])
+  const [supplierName, setSupplierName] = useState([])
   const [supplierNames, setSupplierNames] = useState({});
   
 
@@ -16,9 +17,9 @@ function OrderList(props) {
         }
     };
 
-    const fetchSupplier = async () => {
+    const fetchSupplier = async (order_id) => {
         try {
-            const response = await Axios.get('http://localhost:8080/supplier', {order_id: orders.ORDER_ID}, { withCredentials: true })
+            const response = await Axios.get('http://localhost:8080/supplier', {order_id: order_id}, { withCredentials: true })
             setSupplierId(response.SUPPLIER_ID)
         } catch (error) {
             console.error('Error fetching supplier ID:', error)
@@ -28,7 +29,7 @@ function OrderList(props) {
     const fetchSupplierName = async () => {
         try {
             const response = await Axios.get('http://localhost:8080/supplier', {supplier_id: supplierId}, {withCredentials: true})
-            setSupplierNames(response.SUPPLIER_NAME)
+            setSupplierName(response.SUPPLIER_NAME)
         } catch (error) {
             console.error('Error fetching supplier names:', error)
         }
@@ -49,10 +50,10 @@ function OrderList(props) {
         const fetchSupplierData = async () => {
         const supplierNamesMap = {};
         for (const order of orders) {
-            const supplierId = await fetchSupplier(order.ORDER_ID);
+            await fetchSupplier(order.ORDER_ID);
             if (supplierId) {
-            const supplierName = await fetchSupplierName(supplierId);
-            supplierNamesMap[order.ORDER_ID] = supplierName;
+                await fetchSupplierName(supplierId);
+                supplierNamesMap[order.ORDER_ID] = supplierName;
             }
         }
         setSupplierNames(supplierNamesMap);
