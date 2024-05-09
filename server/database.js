@@ -903,10 +903,28 @@ export async function getBalanceByBusiness(business_id) {
     }
 }
 
-export async function updateBalance(business_id, new_balance) {
+export async function addBalance(business_id, new_balance) {
     const sql = `
         UPDATE BALANCE
-        SET BALANCE = ?
+        SET BALANCE = BALANCE + ?
+        WHERE BUSINESS_ID = ?;
+    `;
+    try {
+        const [result] = await pool.query(sql, [new_balance, business_id]);
+        if (result.affectedRows) {
+            return { updated: true };
+        } else {
+            throw new Error('No balance record found for update');
+        }
+    } catch (error) {
+        throw new Error('Failed to update balance: ' + error.message);
+    }
+}
+
+export async function subtractBalance(business_id, new_balance) {
+    const sql = `
+        UPDATE BALANCE
+        SET BALANCE = BALANCE - ?
         WHERE BUSINESS_ID = ?;
     `;
     try {

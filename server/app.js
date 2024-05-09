@@ -54,7 +54,8 @@ import {
 
     insertBalance,
     getBalanceByBusiness,
-    updateBalance,
+    addBalance,
+    subtractBalance,
     deleteBalance,
 
     insertProduct,
@@ -638,12 +639,28 @@ app.get('/balance/:business_id', async (req, res) => {
     }
 });
 
-// EXTERNAL: update a specific balance record
-app.put('/balance/:business_id/:balance_id', async (req, res) => {
-    const { balance_id, business_id } = req.params;
+// EXTERNAL: add to a specific balance record
+app.put('/addbalance/:business_id', async (req, res) => {
+    const { business_id } = req.params;
     const { new_balance } = req.body;
     try {
-        const result = await updateBalance(balance_id, business_id, new_balance);
+        const result = await addBalance(business_id, new_balance);
+        if (result.updated) {
+            res.send(result);
+        } else {
+            res.status(404).send({ message: 'No balance record found for update' });
+        }
+    } catch (error) {
+        res.status(500).send({ error: error.message });
+    }
+});
+
+// EXTERNAL: subtract from a specific balance record
+app.put('/subtractbalance/:business_id', async (req, res) => {
+    const { business_id } = req.params;
+    const { new_balance } = req.body;
+    try {
+        const result = await subtractBalance(business_id, new_balance);
         if (result.updated) {
             res.send(result);
         } else {
