@@ -94,8 +94,15 @@ export async function insertBusiness(username, password, business_name, address)
     `;
     try {
         const [result] = await pool.query(sql, [username, password, business_name, address]);
-        if (result.affectedRows) {
-            return { username, password, business_name, inserted: true };
+        if (result.affectedRows && result.insertId) {
+            const business_id = result.insertId;
+            // Initialize balance to 0
+            const balanceResult = await insertBalance(business_id, 0);
+            if (balanceResult.inserted) {
+                return { username, password, business_name, inserted: true, balanceInitialized: true };
+            } else {
+                throw new Error('Failed to initialize balance');
+            }
         } else {
             throw new Error('Insert failed, no rows affected');
         }
@@ -878,7 +885,11 @@ export async function insertBalance(business_id, balance) {
         }
 
         const [result] = await pool.query(sql, [business_id, balance]);
-        return { balance_id: result.insertId, inserted: true };
+        if (result.affectedRows) {
+            return { balance_id: result.insertId, inserted: true };
+        } else {
+            throw new Error('Insert failed, no rows affected');
+        }
     } catch (error) {
         throw new Error('Failed to insert balance: ' + error.message);
     }
