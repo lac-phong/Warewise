@@ -735,10 +735,10 @@ async function checkCustomerExists(customer_id, business_id) {
 
 // done and triggers taking care of backend stuff
 // no price cause that's calculated automatically
-export async function insertSale(business_id, product_id, quantity, order_date, payment_details) {
+export async function insertSale(business_id, product_id, quantity, payment_details) {
     const sql = `
-        INSERT INTO SALES (BUSINESS_ID, PRODUCT_ID, QUANTITY, ORDER_DATE, PAYMENT_DETAILS)
-        VALUES (?, ?, ?, ?, ?);
+        INSERT INTO SALES (BUSINESS_ID, PRODUCT_ID, QUANTITY, PAYMENT_DETAILS)
+        VALUES (?, ?, ?, ?);
     `;
     try {
         // Check if the business exists
@@ -754,7 +754,7 @@ export async function insertSale(business_id, product_id, quantity, order_date, 
         }
 
         // Insert the sale; triggers will handle quantity and balance updates
-        const [result] = await pool.query(sql, [business_id, product_id, quantity, order_date, payment_details]);
+        const [result] = await pool.query(sql, [business_id, product_id, quantity, payment_details]);
         return { sale_id: result.insertId, inserted: true };
     } catch (error) {
         throw new Error('Failed to insert sale: ' + error.message);

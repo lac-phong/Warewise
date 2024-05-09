@@ -549,9 +549,9 @@ app.delete('/customer/:business_id/:customer_id', async (req, res) => {
 // EXTERNAL: insert a new sale
 app.post('/sales/:business_id', async (req, res) => {
     const { business_id } = req.params;
-    const { product_id, quantity, order_date, payment_details } = req.body;
+    const { product_id, quantity, payment_details } = req.body;
     try {
-        const result = await insertSale(business_id, product_id, quantity, order_date, payment_details);
+        const result = await insertSale(business_id, product_id, quantity, payment_details);
         res.status(201).send(result);
     } catch (error) {
         res.status(500).send({ error: error.message });
