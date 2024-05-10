@@ -96,7 +96,7 @@ export async function insertBusiness(username, password, business_name, address)
         const [result] = await pool.query(sql, [username, password, business_name, address]);
         if (result.affectedRows && result.insertId) {
             const business_id = result.insertId;
-            // Initialize balance to 0
+            // initialize balance to 0
             const balanceResult = await insertBalance(business_id, 0);
             if (balanceResult.inserted) {
                 return { username, password, business_name, inserted: true, balanceInitialized: true };
@@ -268,7 +268,7 @@ export async function insertProduct(business_id, category_name, product_name, pr
             throw new Error('Business does not exist.');
         }
 
-        // Insert the product
+        // insert the product
         const [result] = await connection.query(sqlProduct, [business_id, category_name, product_name, product_description, quantity, reorder_level, reorder_quantity, price]);
         const product_id = result.insertId;
 
@@ -278,7 +278,6 @@ export async function insertProduct(business_id, category_name, product_name, pr
                 VALUES (?, ?, ?);
             `;
 
-            // Optionally, check if the supplier exists
             const checkSupplier = await checkSupplierExists(supplier_id, business_id);
             if (!checkSupplier) {
                 throw new Error(`Supplier with ID ${supplier_id} does not exist in this business.`);
@@ -394,10 +393,7 @@ export async function deleteProduct(product_id, business_id) {
             throw new Error('Product does not exist for this business.');
         }
 
-        // First, remove relationships from junction table
         await pool.query(sqlDeleteRelationships, [product_id, business_id]);
-
-        // Then, delete the product
         const [result] = await pool.query(sqlDeleteProduct, [product_id, business_id]);
         return { deleted: true };
     } catch (error) {
@@ -443,6 +439,8 @@ export async function insertSupplier(business_id, supplier_name, email, phone, a
 }
 
 export async function getSupplierInfo(business_id, supplier_id) {
+    console.log('business', business_id)
+    console.log('supplier', supplier_id) 
     const sql = `
         SELECT SUPPLIER_NAME, EMAIL, PHONE, ADDRESS, SUPPLIER_CATEGORY 
         FROM SUPPLIERS
@@ -766,7 +764,7 @@ export async function insertSale(business_id, product_id, quantity, payment_deta
         if (!checkBusiness) {
             throw new Error('Business does not exist.');
         }
-        // Optionally, check if the product exists
+
         const checkProduct = await checkProductExists(product_id, business_id);
         if (!checkProduct) {
             throw new Error('Product does not exist.');
@@ -1313,10 +1311,7 @@ export async function deleteOrder(order_id, business_id) {
             throw new Error('Order does not exist for this business.');
         }
 
-        // First, remove relationships from junction table
         await pool.query(sqlDeleteRelationships, [order_id, business_id]);
-
-        // Then, delete the order
         const [result] = await pool.query(sqlDeleteOrder, [order_id, business_id]);
         return { deleted: true };
     } catch (error) {
