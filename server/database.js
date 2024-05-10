@@ -36,6 +36,16 @@ export async function getAccountPage(business_id) {
     }
 }
 
+export async function checkUsernameExists(username) {
+    const sql = `SELECT COUNT(*) AS count FROM BUSINESS WHERE USERNAME = ?`;
+    try {
+        const [rows] = await pool.query(sql, [username]);
+        return rows[0].count > 0;
+    } catch (error) {
+        throw new Error('Database query failed: ' + error.message);
+    }
+}
+
 // ------------------------------------------------------------------------------------------------------------------------------------------------//
 
 // ------------------------------------------------------------- BUSINESS -------------------------------------------------------------------------//
