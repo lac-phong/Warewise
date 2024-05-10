@@ -87,6 +87,10 @@ Once both the server and client are running, access the application by navigatin
 
 
 - **Lac Phong-Nguyen**
+  - Created Order Page, Make Order component, and Order List component
+  - Setup backend functionality for Order Page and Login/Registration Page
+  - Setup JWT authentication for all backend API calls
+  - General bugfixes throughout code
 
 
 - **Shreya Raj**

@@ -15,24 +15,6 @@ function OrderPage() {
       <div>
         <MakeOrder />
       </div>
-      <div className="search">
-        <TextField
-          sx={{ m: 1}}
-          id="outlined-basic"
-          variant="outlined"
-          fullWidth
-          label="Search for a specific order by date, product, supplier..."
-        />
-        <FormControl sx={{ m: 1, minWidth: 150 }}>
-          <InputLabel htmlFor="grouped-select">Select filter</InputLabel>
-          <Select defaultValue="" id="grouped-select" label="Grouping">
-            <MenuItem value=""><em>None</em></MenuItem>
-            <MenuItem value={1}>Date</MenuItem>
-            <MenuItem value={2}>Product</MenuItem>
-            <MenuItem value={3}>Supplier</MenuItem>
-          </Select>
-        </FormControl>
-      </div>
       <div>
         <OrderList />
       </div>
