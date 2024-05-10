@@ -692,19 +692,26 @@ app.delete('/customer/:customer_id', async (req, res) => {
 
 // EXTERNAL: insert a new sale
 app.post('/sales', async (req, res) => {
-    const {token} = req.cookies;
+    const { token } = req.cookies;
     const { product_id, quantity, payment_details } = req.body;
-    if (token) {
-        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
-            console.log('Retrieved userData:', userData);
-            if (err) throw err;
-            const result = await insertSale(userData.business_id, product_id, quantity, payment_details);
-            console.log('Inserted sale:', result);
-            res.json(result);
-        });
-    } else {
-        res.json(null);
+    if (!token) {
+        return res.status(401).json({ error: 'Authentication required' });
     }
+    jwt.verify(token, jwtSecret, async (err, userData) => {
+        if (err) {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+        try {
+            const result = await insertSale(userData.business_id, product_id, quantity, payment_details);
+            res.json(result);
+        } catch (error) {
+            if (error.message === 'Product does not exist.') {
+                res.status(404).json({ error: true, message: 'Product does not exist.' });
+            } else {
+                res.status(500).json({ error: true, message: error.message });
+            }
+        }
+    });
 });
 
 // INTERNAL: insert a new sale (TEST)
