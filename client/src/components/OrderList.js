@@ -4,7 +4,6 @@ import Axios from 'axios';
 function OrderList() {
     const [orders, setOrders] = useState([]);
     const [supplierNames, setSupplierNames] = useState({});
-  
 
     const fetchOrders = async () => {
         try {

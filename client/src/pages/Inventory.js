@@ -8,35 +8,32 @@ import MenuItem from '@mui/material/MenuItem';
 function Inventory() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
 
   useEffect(() => {
-    Axios.get('http://localhost:8080/business', { withCredentials: true })
-      .then(({ data }) => {
-        const businessId = data.BUSINESS_ID;
-        Axios.get(`http://localhost:8080/products/${businessId}`)
-          .then(({ data: productsData }) => {
-            const processedProducts = productsData.map((product) => ({
-              ...product,
-              QUANTITY: parseInt(product.QUANTITY, 10),
-              REORDER_LEVEL: parseInt(product.REORDER_LEVEL, 10),
-              REORDER_QUANTITY: parseInt(product.REORDER_QUANTITY, 10),
-              PRICE: parseFloat(product.PRICE),
-            }));
-            setProducts(processedProducts);
-            setLoading(false);
-          })
-          .catch((error) => {
-            console.error('Error fetching products:', error);
-            setLoading(false);
-          });
-      })
-      .catch((error) => {
-        console.error('Error fetching business ID:', error);
-        setLoading(false);
-      });
+    Axios.get('http://localhost:8080/products', { withCredentials: true }).then(({ data }) => {
+      setProducts(data);
+      setLoading(false);
+      extractCategories(data);
+    })
+    .catch(error => {
+      console.error('Error fetching products:', error);
+      setLoading(false);
+    });
   }, []);
 
+  function extractCategories(products) {
+    console.log(products)
+    const categorySet = new Set();
+    products.forEach(product => {
+      if (product.CATEGORY_NAME && !categorySet.has(product.CATEGORY_NAME)) {
+        categorySet.add(product.CATEGORY_NAME);
+      }
+    });
+    setCategories([...categorySet]);
+  }
+  
   const handleCategoryChange = (event) => {
     setSelectedCategory(event.target.value);
   };
@@ -65,10 +62,11 @@ function Inventory() {
                 id: 'category-select',
               }}
             >
-              <MenuItem value="">All Categories (N/A)</MenuItem>
-              <MenuItem value="Electronics">Electronics</MenuItem>
-              <MenuItem value="Accessories">Accessories</MenuItem>
-              <MenuItem value="Clothing">Clothing</MenuItem>
+              {categories.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </div>
@@ -82,27 +80,33 @@ function Inventory() {
               <div key={categoryName} className="m-4">
                 {(!selectedCategory || categoryName === selectedCategory) && (
                   <>
-                    <h2 className="text-4xl underline mb-4">{categoryName}</h2>
-                    <div className="grid grid-cols-7 gap-4">
-                      <div className="font-bold">Product Name</div>
-                      <div className="font-bold">Product ID</div>
-                      <div className="font-bold">Product Description</div>
-                      <div className="font-bold">Quantity</div>
-                      <div className="font-bold">Reorder Level</div>
-                      <div className="font-bold">Reorder Quantity</div>
-                      <div className="font-bold">Price</div>
+                  <h2 className="text-4xl underline mb-4">{categoryName}</h2>
+                    <div className="grid grid-cols-1 gap-4">
                       {/* Render products for the current category */}
                       {filteredProducts
                         .filter((product) => product.CATEGORY_NAME === categoryName)
                         .map((product) => (
                           <React.Fragment key={product.PRODUCT_ID}>
-                            <div>{product.PRODUCT_NAME}</div>
-                            <div>{product.PRODUCT_ID}</div>
-                            <div>{product.PRODUCT_DESCRIPTION}</div>
-                            <div>{typeof product.QUANTITY === 'number' ? product.QUANTITY : '-'}</div>
-                            <div>{typeof product.REORDER_LEVEL === 'number' ? product.REORDER_LEVEL : '-'}</div>
-                            <div>{typeof product.REORDER_QUANTITY === 'number' ? product.REORDER_QUANTITY : '-'}</div>
-                            <div>{typeof product.PRICE === 'number' ? `$${product.PRICE.toFixed(2)}` : '-'}</div>
+                            <table className="table-auto border-collapse ">
+                              <thead>
+                                <tr className="bg-blue-300 bg-opacity-50">
+                                  <th className="px-8 py-2">Product Name</th>
+                                  <th className="px-8 py-2">Product ID</th>
+                                  <th className="px-8 py-2">Description</th>
+                                  <th className="px-8 py-2">Quantity</th>
+                                  <th className="px-8 py-2">Price</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                  <tr key={product.PRODUCT_ID}>
+                                    <td className="px-8 py-2">{product.PRODUCT_NAME}</td>
+                                    <td className="px-8 py-2">{product.PRODUCT_ID}</td>
+                                    <td className="px-8 py-2">{product.PRODUCT_DESCRIPTION}</td>
+                                    <td className="px-8 py-2">{product.QUANTITY}</td>
+                                    <td className="px-8 py-2">{product.PRICE}</td>
+                                  </tr>
+                              </tbody>
+                            </table>
                           </React.Fragment>
                         ))}
                     </div>
