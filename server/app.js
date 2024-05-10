@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 
 import {
     getAccountPage,
+    checkUsernameExists,
 
     getBusinessId,
     getBusinessInfo,
@@ -85,6 +86,10 @@ app.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
+        const usernameExists = await checkUsernameExists(username);
+        if (usernameExists){
+            return res.status(422).json('Username already exists');
+        }
         const user = await insertBusiness(username, hashedPassword, business_name, address);
         res.json(user);
     } catch (error) {
