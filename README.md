@@ -48,7 +48,7 @@ To run this project, follow the steps below:
    nodemon app.js
    ```
 
-### 2. Running the Client
+### 3. Running the Client
 
 1. **Navigate to Client Directory:**
    ```bash
@@ -63,7 +63,7 @@ To run this project, follow the steps below:
    npm start
    ```
 
-# Accessing the Application
+### 4. Accessing the Application
 
 Once both the server and client are running, access the application by navigating to http://localhost:3000 in your web browser.
 
