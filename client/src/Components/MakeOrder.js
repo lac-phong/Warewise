@@ -43,6 +43,7 @@ export default function MakeOrder() {
 
     const handleAddProduct = () => {
         setProducts([...products, { product_name: '', category_name: '', product_description: '',  quantity: '', price: '' }]);
+        
     };
     
     const handleSupplierSelect = (event) => {
