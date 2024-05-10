@@ -439,6 +439,8 @@ export async function insertSupplier(business_id, supplier_name, email, phone, a
 }
 
 export async function getSupplierInfo(business_id, supplier_id) {
+    console.log('business', business_id)
+    console.log('supplier', supplier_id) 
     const sql = `
         SELECT SUPPLIER_NAME, EMAIL, PHONE, ADDRESS, SUPPLIER_CATEGORY 
         FROM SUPPLIERS
