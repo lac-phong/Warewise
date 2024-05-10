@@ -40,7 +40,7 @@ const EmployeePage = () => {
   }, []);
 
   return (
-    <div className="container mx-auto pt-4">
+    <div className="container mx-auto pt-4 flex flex-col items-center">
       <h1 className="text-4xl flex justify-center font-bold mb-12">Employee Information</h1>
       <div className="overflow-x-auto">
         <AddEmployee onAddEmployee={handleAddEmployee} />

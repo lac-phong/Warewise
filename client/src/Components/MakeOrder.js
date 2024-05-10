@@ -44,10 +44,6 @@ export default function MakeOrder() {
     const handleAddProduct = () => {
         setProducts([...products, { product_name: '', category_name: '', product_description: '',  quantity: '', price: '' }]);
     };
-
-    useEffect(() => {
-        console.log('Selected supplier:', selectedSupplier);
-    }, [selectedSupplier]);
     
     const handleSupplierSelect = (event) => {
         const s = event.target.value;
@@ -103,8 +99,6 @@ export default function MakeOrder() {
 
     const handleOrder = (e) => {
         e.preventDefault();
-        console.log('Supplier selected:',selectedSupplier)
-        console.log('Products ordered:',products)
         Axios.post('http://localhost:8080/allOrders', {
           supplier_id: selectedSupplier, products: products
         }, {withCredentials: true}).then((response) => {
