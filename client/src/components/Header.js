@@ -13,6 +13,8 @@ const Header = () => {
             <Link to={'/inventory'} className='rounded-full mx-8 text-white'>Inventory</Link>
             <Link to={'/order'} className='rounded-full mx-8 text-white'>Order</Link>
             <Link to={'/employee'} className='rounded-full mx-8 text-white'>Employees</Link>
+            <Link to={'/transaction'} className='rounded-full mx-8 text-white'>Transaction</Link>
+
         </div>
         <Link to={'/account'}>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-12 h-12 text-white">

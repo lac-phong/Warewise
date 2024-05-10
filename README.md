@@ -10,7 +10,14 @@ The project structure is organized into the following directories:
 
 To run this project, follow the steps below:
 
-### 1. Setting Up the Database
+### 1. Clone the Repository
+
+   ```bash
+   git clone https://github.com/lac-phong/Warewise.git
+   cd Warewise
+   ```
+
+### 2. Setting Up the Database
 
 1. **Ensure MySQL is Installed:**
 
@@ -20,20 +27,20 @@ To run this project, follow the steps below:
 
    - Navigate to the `server` directory.
    - Create a .env file with the following code:
-   ```bash
-        MYSQL_HOST = '127.0.0.1'
-        MYSQL_USER = 'root'
-        MYSQL_PASSWORD = ''
-        MYSQL_DATABASE = 'WAREWISE'
-        JWT_SECRET = ''
-   ```
+      ```bash
+      MYSQL_HOST = '127.0.0.1'
+      MYSQL_USER = 'root'
+      MYSQL_PASSWORD = ''
+      MYSQL_DATABASE = 'WAREWISE'
+      JWT_SECRET = ''
+      ```
    - Add your MYSQL passoword and create a random string for JWT_SECRET.
 
 3. **Run Database Setup Scripts:**
    - Navigate to the `database` directory.
    - Copy the database setup script code from the file to your MySQL database management tool (e.g., MySQL Workbench) and run the file.
 
-### 2. Running the Server
+### 3. Running the Server
 
 1. **Navigate to Server Directory:**
    ```bash
@@ -48,7 +55,7 @@ To run this project, follow the steps below:
    nodemon app.js
    ```
 
-### 2. Running the Client
+### 4. Running the Client
 
 1. **Navigate to Client Directory:**
    ```bash
@@ -63,11 +70,11 @@ To run this project, follow the steps below:
    npm start
    ```
 
-# Accessing the Application
+### 5. Accessing the Application
 
 Once both the server and client are running, access the application by navigating to http://localhost:3000 in your web browser.
 
-# Division of Work
+## Division of Work
 
 - **Rohith Iyengar**
   - Contributed to creation of database schema
