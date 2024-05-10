@@ -22,13 +22,14 @@ export default function MakeOrder() {
     const [user, setUser] = useState([])
     const [open, setOpen] = React.useState(false);
     const [suppliers, setSuppliers] = useState([])
-    const [products, setProducts] = useState([{ product: '', category: '', description: '',  quantity: '', price: '' }]);
-    const [supplier, setSupplier] = useState();
+    const [products, setProducts] = useState([{ product_name: '', category_name: '', product_description: '',  quantity: '', price: '' }]);
+    const [selectedSupplier, setSelectedSupplier] = useState([]);
 
     useEffect(() => {
         Axios.get(`http://localhost:8080/business`, {withCredentials: true}).then(({data}) => {
           setUser(data);
         });
+        fetchSuppliers()
       }, []);
 
     const fetchSuppliers = async () => {
@@ -41,13 +42,18 @@ export default function MakeOrder() {
     }
 
     const handleAddProduct = () => {
-        setProducts([...products, { product: '', category: '', description: '',  quantity: '', price: '' }]);
+        setProducts([...products, { product_name: '', category_name: '', product_description: '',  quantity: '', price: '' }]);
     };
 
-    const handleSupplierSelect = (e) => {
-        const selectedSupplierId = e.target.value;
-        setSupplier(selectedSupplierId);
-      };
+    useEffect(() => {
+        console.log('Selected supplier:', selectedSupplier);
+    }, [selectedSupplier]);
+    
+    const handleSupplierSelect = (event) => {
+        const s = event.target.value;
+        setSelectedSupplier(s);
+    };
+       
 
     const handleRemoveProduct = (index) => {
         const updatedProducts = [...products];
@@ -57,7 +63,7 @@ export default function MakeOrder() {
 
     const handleProductChange = (index, event) => {
         const updatedProducts = [...products];
-        updatedProducts[index].product = event.target.value;
+        updatedProducts[index].product_name = event.target.value;
         setProducts(updatedProducts);
     };
 
@@ -69,13 +75,13 @@ export default function MakeOrder() {
 
     const handleCategoryChange = (index, event) => {
         const updatedProducts = [...products];
-        updatedProducts[index].category = event.target.value;
+        updatedProducts[index].category_name = event.target.value;
         setProducts(updatedProducts);
     };
 
     const handleDescriptionChange = (index, event) => {
         const updatedProducts = [...products];
-        updatedProducts[index].description = event.target.value;
+        updatedProducts[index].product_description = event.target.value;
         setProducts(updatedProducts);
     };
 
@@ -97,9 +103,11 @@ export default function MakeOrder() {
 
     const handleOrder = (e) => {
         e.preventDefault();
+        console.log('Supplier selected:',selectedSupplier)
+        console.log('Products ordered:',products)
         Axios.post('http://localhost:8080/allOrders', {
-          business_id: user.BUSINESS_ID, supplier_id: supplier, products: products
-        }).then((response) => {
+          supplier_id: selectedSupplier, products: products
+        }, {withCredentials: true}).then((response) => {
           console.log(response);
         })
         setOpen(false);
@@ -119,13 +127,14 @@ export default function MakeOrder() {
                                     defaultValue=""
                                     id="grouped-select"
                                     label="Grouping"
-                                    value={supplier} // Set the value of the Select component to the supplier state
-                                    onChange={(e) => handleSupplierSelect(e)}
+                                    value={selectedSupplier.SUPPLIER_ID}
+                                    onChange={(e) => handleSupplierSelect(e)} // Pass the function directly without invoking it
                                 >
                                     {suppliers.map((supplier) => (
-                                        <MenuItem key={supplier.id} value={supplier.id}>{supplier.SUPPLIER_NAME}</MenuItem>
+                                        <MenuItem key={supplier.SUPPLIER_ID} value={supplier.SUPPLIER_ID}>{supplier.SUPPLIER_NAME}</MenuItem>
                                     ))}
                                 </Select>
+
                             </FormControl>
                         </div>
                         <div>
@@ -135,7 +144,7 @@ export default function MakeOrder() {
                                     <TextField
                                     sx={{ m: 1, width: 200, maxWidth: '100%' }}
                                     label="Product"
-                                    value={product.name}
+                                    value={product.product_name}
                                     onChange={(e) => handleProductChange(index, e)}
                                     id={`product-name-${index}`}
                                     />
@@ -153,14 +162,14 @@ export default function MakeOrder() {
                                 <TextField
                                     sx={{ m: 1, width: 200, maxWidth: '100%' }}
                                     label="Category"
-                                    value={product.category}
+                                    value={product.category_name}
                                     onChange={(e) => handleCategoryChange(index, e)}
                                     id={`product-category-${index}`}
                                 />
                                 <TextField
                                     sx={{ m: 1, width: 200, maxWidth: '100%' }}
                                     label="Description"
-                                    value={product.description}
+                                    value={product.product_description}
                                     onChange={(e) => handleDescriptionChange(index, e)}
                                     id={`product-description-${index}`}
                                 />
