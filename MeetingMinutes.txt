@@ -31,6 +31,8 @@ Group meeting 5/2: 2 hours
 - Continued work on pages, error handling, fixing bugs
 - More backend work
 
+--Various regular backend meetings involving error handling and bugs fixes--
+
 Group meeting 5/7: 5 hours
 - Natalie and Shreya made presentation slides
 - Nyun and Lac debugged front end pages and integrated backend
