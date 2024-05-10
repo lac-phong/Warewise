@@ -111,4 +111,7 @@ Once both the server and client are running, access the application by navigatin
 
 - **Nyun Ei Hlaing**
   - Created Log in, Register, Account, and Employee pages
-  - Created ER diagram.
+  - Created ER diagram
+  - Set up JWT for login and register routes
+  - Error handling
+  
