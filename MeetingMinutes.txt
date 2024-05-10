@@ -1,1 +1,43 @@
-xyz
+Meeting minutes!!
+
+Group meeting 4/2: 20 mins 
+- rohith and lac decided which database and cloud server to use based on price and usability
+- rohith made gantt chart and delegated tasks: natalie and shreya on frontend, lac nyun rohith on backend
+- defined smaller tasks and timeline for completion
+- established general vision for the project
+
+Frontend meeting 4/9: approx 1 hour
+- Natalie set up github, node.js, and watched youtube tutorials for creating react apps
+- Natalie did research on existing inventory management systems, sent resources to discord
+- Shreya diagrammed mockups for the web app screens based on proposal and installed node.js
+- Together looked at figma mockups and options for app layout + screens
+- Assigned tasks for developing: natalie homepage, shreya 1 of the screens
+
+Group meeting 4/16: approx 1 hour
+- rohith and lac did something with the database, not sure about details
+- rohith clarified questions regarding the flow of data and the customer facing aspects
+- natalie continued frontend development work and helped shreya with set up
+- shreya installed npm, cloned the project, and started learning how to use react
+
+Group meeting 4/27: approx 1 hour
+- rohith, lac, and shreya made clarifications about how backend and front end will be integrated together
+- backend team made significant progress with databse design
+
+Group meeting 4/30: 1 hour
+- Began designing frontend components, and redesigning backend to accomodate modified features
+- Started working on different pages, beginning with login, register, and account pages
+
+Group meeting 5/2: 2 hours
+- Continued work on pages, error handling, fixing bugs
+- More backend work
+
+Group meeting 5/7: 5 hours
+- Natalie and Shreya made presentation slides
+- Nyun and Lac debugged front end pages and integrated backend
+- Rohith fixed bugs and developed database
+- Recorded project presentation
+
+Group meeting 5/9: 3 hours
+- Fixed last minute bugs in backend integration
+- Recorded demo of the project
+
