@@ -22,6 +22,7 @@ function TransactionPage() {
      if (!productId || !quantity || !firstName || !lastName || !email || !phone || !address || !paymentMethod) {
          errors.push('Please fill in all fields.');
      }
+     //checking for correct format / data type
      else {
         if (isNaN(parseInt(quantity)) || parseInt(quantity) < 0) {
             errors.push('Please enter a valid number for Quantity.');
@@ -31,58 +32,54 @@ function TransactionPage() {
              errors.push('Please enter a valid 10-digit phone number.');
          }
      }
-
+    //create alert for errors
     if (errors.length > 0) {
       alert(errors.join('\n'));
       return;
-  }
+    }
 
-    const newTransaction= {
-      productId: productId,
-      quantity: parseInt(quantity),
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      phone: phone,
-      address: address,
-      paymentMethod: paymentMethod,
-    };
-    setLastTransaction(newTransaction);
+    try {
+      await Axios.post(`http://localhost:8080/sales`, {
+          product_id: productId,
+          quantity: quantity,
+          payment_details: paymentMethod
+      }, { withCredentials: true });
 
-    Axios.post(`http://localhost:8080/sales`, {
-      product_id: productId,
-      quantity: quantity,
-      payment_details: paymentMethod
-    }, {withCredentials: true})
-    .then(({data}) => {
-      console.log('Transaction successful',data);
-    })
-    .catch((error) => {
-      if (error.response && error.response.status === 404) {
-        alert('Error: ' + error.response.data.message);
-      } else {
-          alert('Product does not exist. Try again.');
-      }
-    });
+      await Axios.post('http://localhost:8080/customers', {
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          phone: phone,
+          address: address
+      }, { withCredentials: true });
 
-    Axios.post('http://localhost:8080/customers', {
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
-        phone: phone,
-        address: address
-      }, {withCredentials: true})
-      
-    // Clear input fields after submitting
-    setProductId('');
-    setQuantity('');
-    setFirstName('');
-    setLastName('');
-    setEmail('');
-    setPhone('');
-    setAddress('');
-    setPaymentMethod('');
-  };
+      setLastTransaction({
+          productId,
+          quantity: parseInt(quantity),
+          firstName,
+          lastName,
+          email,
+          phone,
+          address,
+          paymentMethod,
+      });
+    } catch (error) {
+        if (error.response) {
+            alert('Error: ' + error.response.data.message);
+        } else {
+            alert('Product does not exist. Try again.');
+        }
+    }
+
+  setProductId('');
+  setQuantity('');
+  setFirstName('');
+  setLastName('');
+  setEmail('');
+  setPhone('');
+  setAddress('');
+  setPaymentMethod('');
+};
 
   return (
     <div className="font h-screen flex justify-center items-center">
@@ -188,19 +185,34 @@ function TransactionPage() {
 
         {/* Display last transaction recorded */}
         <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Last Transaction Recorded:</h2>
+          <h2 className="text-4xl flex justify-center font-bold mb-4">Last Transaction Recorded:</h2>
           {lastTransaction ? (
-            <div className="flex">
-              <p className="mr-4">
-                Product ID: {lastTransaction.productId}, Quantity: {lastTransaction.quantity}
-              </p>
-              <p className="mr-4">
-                Customer: {lastTransaction.firstName} {lastTransaction.lastName}, Email: {lastTransaction.email}, Phone: {lastTransaction.phone}
-              </p>
-              <p>
-                Address: {lastTransaction.address}, Payment Method: {lastTransaction.paymentMethod}, Order Date: {lastTransaction.orderDate}
-              </p>
-            </div>
+            <table className="table-auto border-collapse ">
+            <thead>
+              <tr className="bg-blue-300 bg-opacity-50">
+                <th className="px-8 py-2 border-2">Product ID</th>
+                <th className="px-8 py-2 border-2">Quantity</th>
+                <th className="px-8 py-2 border-2">First Name</th>
+                <th className="px-8 py-2 border-2">Last Name</th>
+                <th className="px-8 py-2 border-2">Email</th>
+                <th className="px-8 py-2 border-2">Phone</th>
+                <th className="px-8 py-2 border-2">Address</th>
+                <th className="px-8 py-2 border-2">Payment Method</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="px-8 py-2 border-2">{lastTransaction.productId}</td>
+                <td className="px-8 py-2 border-2">{lastTransaction.quantity}</td>
+                <td className="px-8 py-2 border-2">{lastTransaction.firstName}</td>
+                <td className="px-8 py-2 border-2">{lastTransaction.lastName}</td>
+                <td className="px-8 py-2 border-2">{lastTransaction.email}</td>
+                <td className="px-8 py-2 border-2">{lastTransaction.phone}</td>
+                <td className="px-8 py-2 border-2">{lastTransaction.address}</td>
+                <td className="px-8 py-2 border-2">{lastTransaction.paymentMethod}</td>
+              </tr>
+            </tbody>
+          </table>
           ) : (
             <p>No transactions recorded yet.</p>
           )}

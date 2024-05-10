@@ -20,7 +20,6 @@ const EmployeePage = () => {
     try {
       const response = await axios.post('http://localhost:8080/employee', employee, { withCredentials: true });
       setEmployees([...employees, response.data]);
-      fetchEmployees();
     } catch (error) {
       console.error('Error adding employee:', error);
     }
