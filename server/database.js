@@ -1032,7 +1032,7 @@ export async function insertMultipleProductOrder(business_id, supplier_id, produ
         }
     } catch (error) {
         await connection.rollback();
-        throw new Error('Failed to insert order: ' + error.message);
+        throw new Error('Failed to insert order');
     } finally {
         connection.release();
     }

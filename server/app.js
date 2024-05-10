@@ -294,10 +294,17 @@ app.post('/allOrders', async (req, res) => {
         jwt.verify(token, jwtSecret, {}, async (err, userData) => {
             console.log('Retrieved userData:', userData);
             if (err) throw err;
-            const result = await insertMultipleProductOrder(userData.business_id, supplier_id, products);
-            console.log('Inserted Order Info:', result);
-            res.status(201).json(result);
-            
+            try {
+                const result = await insertMultipleProductOrder(userData.business_id, supplier_id, products);
+                console.log('Inserted Order Info:', result);
+                res.status(201).json(result);
+            } catch (error) {
+                if (error.message === 'Failed to insert order') {
+                    res.status(404).json({ error: true, message: 'Failed to insert order' });
+                } else {
+                    res.status(500).json({ error: true, message: error.message });
+                }
+            }
         });
     } else {
         res.json(null);
@@ -425,11 +432,15 @@ app.put('/update-order/:order_id', async (req, res) => {
         jwt.verify(token, jwtSecret, {}, async (err, userData) => {
             console.log('Retrieved userData:', userData);
             if (err) throw err;
-            const result = await updateOrderDetails(order_id, userData.business_id, updates);
-            if (result.updated) {
+            try {
+                const result = await updateOrderDetails(order_id, userData.business_id, updates);
                 res.json('Order updated successfully:', result);
-            } else {
-                res.status(404).send('Order not found.');
+            } catch (error) {
+                if (error.message == 'No order found for update') {
+                    res.status(404).json({ error:true, message: 'No order found for update' });
+                } else {
+                    res.status(500).json({ error:true, message: error.message });
+                }
             }
         });
     } else {

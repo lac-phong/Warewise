@@ -99,11 +99,16 @@ export default function MakeOrder() {
 
     const handleOrder = (e) => {
         e.preventDefault();
-        Axios.post('http://localhost:8080/allOrders', {
-          supplier_id: selectedSupplier, products: products
-        }, {withCredentials: true}).then((response) => {
-          console.log(response);
-        })
+        try {
+            Axios.post('http://localhost:8080/allOrders', {
+            supplier_id: selectedSupplier, products: products
+            }, {withCredentials: true}).then((response) => {
+            console.log(response);
+            })
+        } catch(error) {
+            console.log('Error creating order:',error)
+        }
+        
         setOpen(false);
     };
 
