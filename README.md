@@ -13,8 +13,8 @@ To run this project, follow the steps below:
 ### 1. Clone the Repository
 
    ```bash
-   git clone https://github.com/lac-phong/Warewise.git
-   cd Warewise
+      git clone https://github.com/lac-phong/Warewise.git
+      cd Warewise
    ```
 
 ### 2. Setting Up the Database
