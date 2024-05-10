@@ -131,6 +131,7 @@ app.post('/login', async (req, res) => {
 
 // EXTERNAL: get account page
 app.get('/getaccountpage', async (req, res) => {
+    console.log(req.cookies)
     const {token} = req.cookies;
     if (token) {
         jwt.verify(token, jwtSecret, {}, async (err, userData) => {
@@ -286,6 +287,7 @@ app.delete("/employee/:employee_id", async (req, res) => {
 
 // EXTERNAL: insert multiple products in the same order
 app.post('/allOrders', async (req, res) => {
+    console.log("doing order")
     const {token} = req.cookies;
     const { supplier_id, products } = req.body;
     if (token) {
@@ -530,25 +532,10 @@ app.get('/suppliers', async (req, res) => {
     }
 });
 
-// EXTERNAL: get ALL detailed information about a specific supplier
-app.get('/supplier/:supplier_id', async (req, res) => {
-    const {token} = req.cookies;
-    const { supplier_id } = req.params;
-    if (token) {
-        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
-            console.log('Retrieved userData:', userData);
-            if (err) throw err;
-            const result = await getSupplierInfo(supplier_id, userData.business_id);
-            console.log('Supplier:', result);
-            res.json(result);
-        });
-    } else {
-        res.json(null);
-    }
-});
-
 // EXTERNAL: get supplier ID from business id and order id
 app.get('/supplier/:order_id', async (req, res) => {
+    console.log(req.params)
+    console.log('getting supplier from order')
     const {token} = req.cookies;
     const { order_id } = req.params;
     if (token) {
