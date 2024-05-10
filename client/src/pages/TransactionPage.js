@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import Axios from 'axios';
+import { set } from 'mongoose';
 
 function TransactionPage() {
   const [productId, setProductId] = useState('');
@@ -9,26 +11,68 @@ function TransactionPage() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
-  const [orderDate, setOrderDate] = useState('');
   const [lastTransaction, setLastTransaction] = useState(null);
 
-  const handleTransaction = (event) => {
+  const handleTransaction = async(event) => {
     event.preventDefault(); // Prevent default form submission behavior
 
-    const newTransaction = {
+     //error handling
+     const errors = [];
+
+     if (!productId || !quantity || !firstName || !lastName || !email || !phone || !address || !paymentMethod) {
+         errors.push('Please fill in all fields.');
+     }
+     else {
+        if (isNaN(parseInt(quantity)) || parseInt(quantity) < 0) {
+            errors.push('Please enter a valid number for Quantity.');
+        }
+         const phoneRegex = /^\d{10}$/; 
+         if (!phoneRegex.test(phone)) {
+             errors.push('Please enter a valid 10-digit phone number.');
+         }
+     }
+
+    if (errors.length > 0) {
+      alert(errors.join('\n'));
+      return;
+  }
+
+    const newTransaction= {
       productId: productId,
-      quantity: quantity,
+      quantity: parseInt(quantity),
       firstName: firstName,
       lastName: lastName,
       email: email,
       phone: phone,
       address: address,
       paymentMethod: paymentMethod,
-      orderDate: orderDate,
     };
-
     setLastTransaction(newTransaction);
 
+    Axios.post(`http://localhost:8080/sales`, {
+      product_id: productId,
+      quantity: quantity,
+      payment_details: paymentMethod
+    }, {withCredentials: true})
+    .then(({data}) => {
+      console.log('Transaction successful',data);
+    })
+    .catch((error) => {
+      if (error.response && error.response.status === 404) {
+        alert('Error: ' + error.response.data.message);
+      } else {
+          alert('Product does not exist. Try again.');
+      }
+    });
+
+    Axios.post('http://localhost:8080/customers', {
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        phone: phone,
+        address: address
+      }, {withCredentials: true})
+      
     // Clear input fields after submitting
     setProductId('');
     setQuantity('');
@@ -38,7 +82,6 @@ function TransactionPage() {
     setPhone('');
     setAddress('');
     setPaymentMethod('');
-    setOrderDate('');
   };
 
   return (
@@ -128,17 +171,6 @@ function TransactionPage() {
               placeholder="Payment Method"
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="flex-grow px-5 py-2 mb-2 rounded-full border border-gray-300"
-            />
-          </div>
-          <div className="flex mb-4 items-center">
-            <label htmlFor="orderDate" className="w-1/8 text-left mr-2 mb-2 px-3">Order Date</label>
-            <input 
-              type="text"
-              id="orderDate"
-              placeholder="Order Date"
-              value={orderDate}
-              onChange={(e) => setOrderDate(e.target.value)}
               className="flex-grow px-5 py-2 mb-2 rounded-full border border-gray-300"
             />
           </div>

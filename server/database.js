@@ -766,7 +766,6 @@ export async function insertSale(business_id, product_id, quantity, payment_deta
         if (!checkBusiness) {
             throw new Error('Business does not exist.');
         }
-
         // Optionally, check if the product exists
         const checkProduct = await checkProductExists(product_id, business_id);
         if (!checkProduct) {
