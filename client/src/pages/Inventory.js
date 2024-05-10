@@ -8,35 +8,31 @@ import MenuItem from '@mui/material/MenuItem';
 function Inventory() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
 
   useEffect(() => {
-    Axios.get('http://localhost:8080/business', { withCredentials: true })
-      .then(({ data }) => {
-        const businessId = data.BUSINESS_ID;
-        Axios.get(`http://localhost:8080/products/${businessId}`)
-          .then(({ data: productsData }) => {
-            const processedProducts = productsData.map((product) => ({
-              ...product,
-              QUANTITY: parseInt(product.QUANTITY, 10),
-              REORDER_LEVEL: parseInt(product.REORDER_LEVEL, 10),
-              REORDER_QUANTITY: parseInt(product.REORDER_QUANTITY, 10),
-              PRICE: parseFloat(product.PRICE),
-            }));
-            setProducts(processedProducts);
-            setLoading(false);
-          })
-          .catch((error) => {
-            console.error('Error fetching products:', error);
-            setLoading(false);
-          });
-      })
-      .catch((error) => {
-        console.error('Error fetching business ID:', error);
-        setLoading(false);
-      });
+    Axios.get('http://localhost:8080/products', { withCredentials: true }).then(({ data }) => {
+      setProducts(data);
+      setLoading(false);
+      extractCategories(data);
+    })
+    .catch(error => {
+      console.error('Error fetching products:', error);
+      setLoading(false);
+    });
   }, []);
 
+  function extractCategories(products) {
+    const categorySet = new Set();
+    products.forEach(product => {
+      if (product.CATEGORY_NAME && !categorySet.has(product.CATEGORY_NAME)) {
+        categorySet.add(product.CATEGORY_NAME);
+      }
+    });
+    setCategories([...categorySet]);
+  }
+  
   const handleCategoryChange = (event) => {
     setSelectedCategory(event.target.value);
   };
@@ -65,10 +61,11 @@ function Inventory() {
                 id: 'category-select',
               }}
             >
-              <MenuItem value="">All Categories (N/A)</MenuItem>
-              <MenuItem value="Electronics">Electronics</MenuItem>
-              <MenuItem value="Accessories">Accessories</MenuItem>
-              <MenuItem value="Clothing">Clothing</MenuItem>
+              {categories.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </div>
